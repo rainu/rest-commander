@@ -1,7 +1,12 @@
 package de.rainu.restcommander.config.security;
 
+import de.rainu.restcommander.controller.AuthenticationController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,8 +23,15 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
  */
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+	@ConditionalOnExpression("not environment.containsProperty('debug_mode')")
+	@EnableGlobalMethodSecurity(prePostEnabled = true)
+	public static class EnablePrePost {
+	}
+
+	@Value("#{environment.debug_mode ?: false}")
+	private boolean debugMode;
 
 	@Bean
 	public AuthenticationProvider createCustomAuthenticationProvider() {
@@ -28,6 +40,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		if(debugMode) {
+			http.anonymous();
+			return;
+		}
+
 		http
 		  .addFilterBefore(createCustomFilter(), AnonymousAuthenticationFilter.class)
 		  .csrf().disable();
@@ -38,7 +55,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		//here we define the interfaces which don't need any authorisation
 		AuthFilter filter = new AuthFilter(new NegatedRequestMatcher(
 		  new AndRequestMatcher(
-			 new AntPathRequestMatcher("/login"),
+			 new AntPathRequestMatcher(AuthenticationController.LOGIN_PATH),
 			 new AntPathRequestMatcher("/health")
 		  )
 		));
