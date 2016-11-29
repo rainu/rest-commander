@@ -2,10 +2,7 @@ package de.rainu.restcommander.controller;
 
 import de.rainu.restcommander.config.security.annotation.IsAdmin;
 import de.rainu.restcommander.model.Process;
-import de.rainu.restcommander.model.dto.ProcessInputRequest;
-import de.rainu.restcommander.model.dto.ProcessSignalResponse;
-import de.rainu.restcommander.model.dto.ProcessCreateResponse;
-import de.rainu.restcommander.model.dto.ProcessRequest;
+import de.rainu.restcommander.model.dto.*;
 import de.rainu.restcommander.process.ProcessManager;
 import de.rainu.restcommander.process.ProcessNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +68,12 @@ public class ProcessController {
 		}
 
 		processManager.sendInput(pid, rawInput);
+	}
+
+	@RequestMapping(path = "/{pid}", method = RequestMethod.GET)
+	@ResponseBody
+	public Process status(@PathVariable("pid") String pid) throws ProcessNotFoundException {
+		return processManager.getProcess(pid);
 	}
 
 	private String replaceSpecialCharacters(String input) {

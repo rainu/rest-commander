@@ -6,6 +6,8 @@ public class Process {
 	private String id;
 	private String cmdline;
 	private Map<String, String> env;
+	private boolean running;
+	private Integer returnCode;
 
 	public String getId() {
 		return id;
@@ -29,6 +31,22 @@ public class Process {
 
 	public void setEnv(Map<String, String> env) {
 		this.env = env;
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void setRunning(boolean running) {
+		this.running = running;
+	}
+
+	public Integer getReturnCode() {
+		return returnCode;
+	}
+
+	public void setReturnCode(Integer returnCode) {
+		this.returnCode = returnCode;
 	}
 
 	@Override

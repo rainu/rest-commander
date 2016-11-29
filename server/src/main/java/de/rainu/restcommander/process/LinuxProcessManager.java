@@ -1,9 +1,7 @@
 package de.rainu.restcommander.process;
 
 import de.rainu.restcommander.model.Process;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecuteResultHandler;
-import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -37,6 +35,11 @@ public class LinuxProcessManager implements ProcessManager{
 	private Process toProcess(String pid) {
 		Process process = new Process();
 		process.setId(pid);
+		process.setRunning(new File(getProcessDir(pid)).exists());
+
+		if(!process.isRunning()) {
+			return process;
+		}
 
 		try {
 			process.setCmdline(FileUtils.readFileToString(new File(getCommandlineFile(pid))).replace("\u0000", " "));
@@ -58,6 +61,19 @@ public class LinuxProcessManager implements ProcessManager{
 
 			process.setEnv(environments);
 		} catch (IOException e) {
+		}
+
+		return process;
+	}
+
+	@Override
+	public Process getProcess(String pid) throws ProcessNotFoundException {
+		checkPid(pid);
+
+		final Process process = toProcess(pid);
+		if(!process.isRunning() && processHandles.containsKey(pid)) {
+			// i can only know the return code if i starts the process!
+			process.setReturnCode(processHandles.get(pid).getProcess().exitValue());
 		}
 
 		return process;
@@ -146,11 +162,15 @@ public class LinuxProcessManager implements ProcessManager{
 		return "/proc/";
 	}
 
+	private String getProcessDir(String pid) {
+		return getProcDir() + "/" + pid + "/";
+	}
+
 	private String getCommandlineFile(String pid) {
-		return getProcDir() + "/" + pid + "/cmdline";
+		return getProcessDir(pid) + "cmdline";
 	}
 
 	private String getEnvironmentFile(String pid) {
-		return getProcDir() + "/" + pid + "/environ";
+		return getProcessDir(pid) + "environ";
 	}
 }
