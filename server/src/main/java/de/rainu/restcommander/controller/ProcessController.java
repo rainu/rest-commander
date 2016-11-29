@@ -2,12 +2,11 @@ package de.rainu.restcommander.controller;
 
 import de.rainu.restcommander.config.security.annotation.IsAdmin;
 import de.rainu.restcommander.model.Process;
+import de.rainu.restcommander.model.dto.ProcessCreateResponse;
+import de.rainu.restcommander.model.dto.ProcessRequest;
 import de.rainu.restcommander.process.ProcessManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,5 +24,16 @@ public class ProcessController {
 	@ResponseBody
 	public List<Process> listProcess() throws IOException {
 		return processManager.listProcess();
+	}
+
+	@RequestMapping(method = RequestMethod.POST)
+	@ResponseBody
+	public ProcessCreateResponse create(@RequestBody ProcessRequest process) throws IOException {
+		final String pid = processManager.createProcess(process.getCmd(),
+				  process.getArgs(),
+				  process.getEnv(),
+				  process.getWorkdir());
+
+		return new ProcessCreateResponse(pid);
 	}
 }

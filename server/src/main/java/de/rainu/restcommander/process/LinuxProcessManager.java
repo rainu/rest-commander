@@ -1,10 +1,13 @@
 package de.rainu.restcommander.process;
 
 import de.rainu.restcommander.model.Process;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -54,6 +57,44 @@ public class LinuxProcessManager implements ProcessManager{
 		}
 
 		return process;
+	}
+
+	@Override
+	public String createProcess(String command, List<String> arguments,
+										 Map<String, String> environment, String workingDirectory) throws IOException {
+
+		CommandLine line = new CommandLine(command);
+		if(arguments != null) arguments.stream().forEach(line::addArgument);
+
+		CommandExecutor executor = new CommandExecutor(workingDirectory);
+
+		final java.lang.Process process;
+		if(environment != null) {
+			process = executor.execute(line, environment, new DefaultExecuteResultHandler());
+		} else {
+			process = executor.execute(line, new DefaultExecuteResultHandler());
+		}
+
+		return extractPid(process);
+	}
+
+	private String extractPid(java.lang.Process process) {
+		Field field = null;
+		Object pid = null;
+
+		try {
+			field = process.getClass().getDeclaredField("pid");
+			field.setAccessible(true);
+			pid = field.get(process);
+		} catch(Exception e) {
+		} finally {
+			if(field != null) {
+				field.setAccessible(false);
+			}
+		}
+
+		if(pid == null) return null;
+		return String.valueOf(pid);
 	}
 
 	String getProcDir() {
