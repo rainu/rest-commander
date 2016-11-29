@@ -41,7 +41,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		if(debugMode) {
-			http.anonymous();
+			http.anonymous()
+			  .and().csrf().disable();
 			return;
 		}
 

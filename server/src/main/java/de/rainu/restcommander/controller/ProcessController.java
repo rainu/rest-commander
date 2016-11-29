@@ -2,6 +2,7 @@ package de.rainu.restcommander.controller;
 
 import de.rainu.restcommander.config.security.annotation.IsAdmin;
 import de.rainu.restcommander.model.Process;
+import de.rainu.restcommander.model.dto.ProcessSignalResponse;
 import de.rainu.restcommander.model.dto.ProcessCreateResponse;
 import de.rainu.restcommander.model.dto.ProcessRequest;
 import de.rainu.restcommander.process.ProcessManager;
@@ -35,5 +36,16 @@ public class ProcessController {
 				  process.getWorkdir());
 
 		return new ProcessCreateResponse(pid);
+	}
+
+	@RequestMapping(path = "/{pid}/{signal}", method = RequestMethod.PATCH)
+	@ResponseBody
+	public ProcessSignalResponse signal(@PathVariable("pid") String pid,
+													@PathVariable("signal") String signal) throws IOException {
+
+		ProcessSignalResponse response = new ProcessSignalResponse();
+		response.setReturnCode(processManager.sendSignal(pid, signal));
+
+		return response;
 	}
 }

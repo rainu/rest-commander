@@ -10,4 +10,6 @@ public interface ProcessManager {
 	List<Process> listProcess() throws IOException;
 
 	String createProcess(String command, List<String> arguments, Map<String, String> environment, String workingDirectory) throws IOException;
+
+	int sendSignal(String pid, String signal) throws IOException;
 }

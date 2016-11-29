@@ -3,6 +3,7 @@ package de.rainu.restcommander.process;
 import de.rainu.restcommander.model.Process;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
+import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 public class LinuxProcessManager implements ProcessManager{
 	private static final Pattern PID_PATTERN = Pattern.compile("[0-9]+");
+	private static final Pattern SIGNAL_PATTERN = Pattern.compile("[0-9]+");
 
 	@Override
 	public List<Process> listProcess() throws IOException {
@@ -76,6 +78,25 @@ public class LinuxProcessManager implements ProcessManager{
 		}
 
 		return extractPid(process);
+	}
+
+	@Override
+	public int sendSignal(String pid, String signal) throws IOException {
+		if(!PID_PATTERN.matcher(pid).matches()) {
+			throw new IllegalArgumentException("No valid pid(" + pid + ")!");
+		}
+
+		CommandLine killCommand = new CommandLine("kill");
+
+		if(SIGNAL_PATTERN.matcher(signal).matches()) {
+			killCommand.addArgument("-" + signal);
+		}else {
+			killCommand.addArgument("-s");
+			killCommand.addArgument(signal);
+		}
+		killCommand.addArgument(pid);
+
+		return new DefaultExecutor().execute(killCommand);
 	}
 
 	private String extractPid(java.lang.Process process) {
