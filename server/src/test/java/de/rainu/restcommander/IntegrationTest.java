@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 
+import static de.rainu.restcommander.controller.AuthenticationController.LOGIN_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -43,7 +44,7 @@ public abstract class IntegrationTest {
 	}
 
 	public LoginResponse login(String username, String password) throws IOException {
-		ClientResponse response = client.resource(baseUrl + "/login")
+		ClientResponse response = client.resource(baseUrl + LOGIN_PATH)
 				  .type(MediaType.APPLICATION_JSON)
 				  .post(ClientResponse.class, "{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}");
 

@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static de.rainu.restcommander.controller.AuthenticationController.*;
 
 public class SecurityIT extends IntegrationTest {
 	@Test
@@ -31,7 +32,7 @@ public class SecurityIT extends IntegrationTest {
 
 	@Test
 	public void userDoesNotExists() throws IOException {
-		ClientResponse response = client.resource(baseUrl + "/login")
+		ClientResponse response = client.resource(baseUrl + LOGIN_PATH)
 				  .type(MediaType.APPLICATION_JSON)
 				  .post(ClientResponse.class, "{\"username\":\"wronguser\", \"password\":\"password\"}");
 
@@ -43,7 +44,7 @@ public class SecurityIT extends IntegrationTest {
 
 	@Test
 	public void wrongPassword() throws IOException {
-		ClientResponse response = client.resource(baseUrl + "/login")
+		ClientResponse response = client.resource(baseUrl + LOGIN_PATH)
 				  .type(MediaType.APPLICATION_JSON)
 				  .post(ClientResponse.class, "{\"username\":\"admin\", \"password\":\"password\"}");
 
@@ -85,7 +86,7 @@ public class SecurityIT extends IntegrationTest {
 	public void logout() throws IOException {
 		LoginResponse data = login("admin", "admin");
 
-		ClientResponse response = client.resource(baseUrl + "/me/logout")
+		ClientResponse response = client.resource(baseUrl + LOGOUT_PATH)
 				  .header(AuthFilter.TOKEN_HEADER, data.getToken())
 				  .post(ClientResponse.class);
 

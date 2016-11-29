@@ -18,14 +18,18 @@ import java.util.UUID;
  * This controller contains the endpoints for handling user tokens.
  */
 @RestController
-public class LoginController {
+public class AuthenticationController {
+	private static final String ROOT_PATH = "/auth";
+	public static final String LOGIN_PATH = ROOT_PATH + "/login";
+	public static final String LOGOUT_PATH = ROOT_PATH + "/logout";
+
 	@Autowired
 	UserStore userStore;
 
 	@Autowired
 	TokenStore tokenStore;
 
-	@RequestMapping(path = "/login", method = RequestMethod.POST)
+	@RequestMapping(path = LOGIN_PATH, method = RequestMethod.POST)
 	@ResponseBody
 	public Object login(@RequestBody AuthDTO auth) {
 		User user = userStore.get(auth.getUsername());
@@ -39,7 +43,7 @@ public class LoginController {
 		return new ResponseEntity(new ErrorResponse("Username or password are incorrect!"), HttpStatus.BAD_REQUEST);
 	}
 
-	@RequestMapping(path = "/me/logout", method = RequestMethod.POST)
+	@RequestMapping(path = LOGOUT_PATH, method = RequestMethod.POST)
 	public void logout(AuthenticationToken authToken) {
 		tokenStore.remove(authToken.getToken());
 	}
