@@ -1,6 +1,5 @@
 package de.rainu.restcommander.model;
 
-import java.util.List;
 import java.util.Map;
 
 public class Process {

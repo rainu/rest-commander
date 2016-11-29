@@ -4,11 +4,14 @@ import org.apache.commons.exec.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 public class CommandExecutor {
 	private final DefaultExecutor executor;
 	private final ProcessInterceptor processInterceptor;
+	private final StreamInterceptor streamInterceptor;
 
 	public CommandExecutor(String workdir) {
 		this.executor = new DefaultExecutor();
@@ -19,35 +22,44 @@ public class CommandExecutor {
 
 		this.processInterceptor = new ProcessInterceptor();
 		this.executor.setWatchdog(processInterceptor);
+
+		this.streamInterceptor = new StreamInterceptor();
+		this.executor.setStreamHandler(streamInterceptor);
 	}
 
-	public Process execute(CommandLine command, ExecuteResultHandler handler) throws IOException {
-		ExecuteResultHandler internalHandler = new ExecuteResultHandlerWrapper(handler);
-		executor.execute(command, internalHandler);
+	public ProcessHandle execute(CommandLine command, ExecuteResultHandler handler) throws IOException {
+		executor.execute(command, handler);
 
+		return buildProcessHandle();
+	}
+
+	public ProcessHandle execute(CommandLine command, Map<String, String> environment, ExecuteResultHandler handler) throws IOException {
+		executor.execute(command, environment, handler);
+
+		return buildProcessHandle();
+	}
+
+	private ProcessHandle buildProcessHandle() {
 		try {
-			synchronized (internalHandler) {
-				internalHandler.wait();
+			synchronized (processInterceptor) {
+				processInterceptor.wait();
+			}
+
+			if(!streamInterceptor.triggerd) {
+				synchronized (streamInterceptor) {
+					streamInterceptor.wait();
+				}
 			}
 		} catch (InterruptedException e) {
 		}
-		return processInterceptor.process;
+
+		return new ProcessHandle(processInterceptor.process,
+				  streamInterceptor.stdin,
+				  streamInterceptor.stderr,
+				  streamInterceptor.stdout);
 	}
 
-	public Process execute(CommandLine command, Map<String, String> environment, ExecuteResultHandler handler) throws IOException {
-		ExecuteResultHandler internalHandler = new ExecuteResultHandlerWrapper(handler);
-		executor.execute(command, environment, internalHandler);
-
-		try {
-			synchronized (internalHandler) {
-				internalHandler.wait();
-			}
-		} catch (InterruptedException e) {
-		}
-		return processInterceptor.process;
-	}
-
-	public static class ProcessInterceptor extends ExecuteWatchdog {
+	static class ProcessInterceptor extends ExecuteWatchdog {
 		Process process;
 
 		public ProcessInterceptor() {
@@ -58,29 +70,74 @@ public class CommandExecutor {
 		public synchronized void start(Process processToMonitor) {
 			this.process = processToMonitor;
 
+			synchronized (this) {
+				notify();
+			}
+
 			super.start(processToMonitor);
 		}
 	}
 
-	public static class ExecuteResultHandlerWrapper implements ExecuteResultHandler {
-		private final ExecuteResultHandler handler;
+	static class StreamInterceptor implements ExecuteStreamHandler {
+		boolean triggerd = false;
+		OutputStream stdin;
+		InputStream stdout;
+		InputStream stderr;
 
-		public ExecuteResultHandlerWrapper(ExecuteResultHandler handler) {
-			this.handler = handler;
+		@Override
+		public void setProcessInputStream(OutputStream os) throws IOException {
+			stdin = os;
 		}
 
-		public void onProcessComplete(int exitValue) {
+		@Override
+		public void setProcessErrorStream(InputStream is) throws IOException {
+			stderr = is;
+		}
+
+		@Override
+		public void setProcessOutputStream(InputStream is) throws IOException {
+			stdout = is;
+		}
+
+		@Override
+		public void start() throws IOException {
 			synchronized (this) {
 				notify();
 			}
-			handler.onProcessComplete(exitValue);
+			triggerd = true;
 		}
 
-		public void onProcessFailed(ExecuteException e) {
+		@Override
+		public void stop() throws IOException {
 			synchronized (this) {
 				notify();
 			}
-			handler.onProcessFailed(e);
+			triggerd = true;
 		}
 	}
+
+//	static class ExecuteResultHandlerWrapper implements ExecuteResultHandler {
+//		private final ExecuteResultHandler handler;
+//		boolean triggerd = false;
+//
+//		public ExecuteResultHandlerWrapper(ExecuteResultHandler handler) {
+//			this.handler = handler;
+//		}
+//
+//		public void onProcessComplete(int exitValue) {
+//			synchronized (this) {
+//				notify();
+//			}
+//			triggerd = true;
+//			handler.onProcessComplete(exitValue);
+//		}
+//
+//		public void onProcessFailed(ExecuteException e) {
+//			synchronized (this) {
+//				notify();
+//			}
+//			triggerd = true;
+//			handler.onProcessFailed(e);
+//		}
+//	}
 }

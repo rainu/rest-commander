@@ -22,6 +22,8 @@ public class LinuxProcessManager implements ProcessManager{
 	private static final Pattern PID_PATTERN = Pattern.compile("[0-9]+");
 	private static final Pattern SIGNAL_PATTERN = Pattern.compile("[0-9]+");
 
+	private Map<String, ProcessHandle> processHandles = new HashMap<>();
+
 	@Override
 	public List<Process> listProcess() throws IOException {
 		return Files.list(Paths.get(getProcDir()))
@@ -70,21 +72,24 @@ public class LinuxProcessManager implements ProcessManager{
 
 		CommandExecutor executor = new CommandExecutor(workingDirectory);
 
-		final java.lang.Process process;
+		final ProcessHandle handle;
 		if(environment != null) {
-			process = executor.execute(line, environment, new DefaultExecuteResultHandler());
+			handle = executor.execute(line, environment, new DefaultExecuteResultHandler());
 		} else {
-			process = executor.execute(line, new DefaultExecuteResultHandler());
+			handle = executor.execute(line, new DefaultExecuteResultHandler());
 		}
 
-		return extractPid(process);
+		final String pid = extractPid(handle.getProcess());
+		if(pid != null) {
+			processHandles.put(pid, handle);
+		}
+
+		return pid;
 	}
 
 	@Override
-	public int sendSignal(String pid, String signal) throws IOException {
-		if(!PID_PATTERN.matcher(pid).matches()) {
-			throw new IllegalArgumentException("No valid pid(" + pid + ")!");
-		}
+	public int sendSignal(String pid, String signal) throws IOException, ProcessNotFoundException {
+		checkPid(pid);
 
 		CommandLine killCommand = new CommandLine("kill");
 
@@ -97,6 +102,25 @@ public class LinuxProcessManager implements ProcessManager{
 		killCommand.addArgument(pid);
 
 		return new DefaultExecutor().execute(killCommand);
+	}
+
+	@Override
+	public void sendInput(String pid, byte[] rawInput) throws IOException, ProcessNotFoundException {
+		checkPid(pid);
+
+		final ProcessHandle handle = processHandles.get(pid);
+		if(handle == null){
+			throw new ProcessNotFoundException(pid);
+		}
+
+		handle.getStdin().write(rawInput);
+		handle.getStdin().flush();
+	}
+
+	private void checkPid(String pid) throws ProcessNotFoundException {
+		if(pid == null || !PID_PATTERN.matcher(pid).matches()) {
+			throw new ProcessNotFoundException(pid);
+		}
 	}
 
 	private String extractPid(java.lang.Process process) {

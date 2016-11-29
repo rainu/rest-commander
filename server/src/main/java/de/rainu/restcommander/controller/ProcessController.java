@@ -2,14 +2,18 @@ package de.rainu.restcommander.controller;
 
 import de.rainu.restcommander.config.security.annotation.IsAdmin;
 import de.rainu.restcommander.model.Process;
+import de.rainu.restcommander.model.dto.ProcessInputRequest;
 import de.rainu.restcommander.model.dto.ProcessSignalResponse;
 import de.rainu.restcommander.model.dto.ProcessCreateResponse;
 import de.rainu.restcommander.model.dto.ProcessRequest;
 import de.rainu.restcommander.process.ProcessManager;
+import de.rainu.restcommander.process.ProcessNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 
 @IsAdmin
@@ -41,11 +45,40 @@ public class ProcessController {
 	@RequestMapping(path = "/{pid}/{signal}", method = RequestMethod.PATCH)
 	@ResponseBody
 	public ProcessSignalResponse signal(@PathVariable("pid") String pid,
-													@PathVariable("signal") String signal) throws IOException {
+													@PathVariable("signal") String signal) throws IOException, ProcessNotFoundException {
 
 		ProcessSignalResponse response = new ProcessSignalResponse();
 		response.setReturnCode(processManager.sendSignal(pid, signal));
 
 		return response;
+	}
+
+	@RequestMapping(path = "/{pid}", method = RequestMethod.POST)
+	public void input(@PathVariable("pid") String pid,
+							@RequestBody ProcessInputRequest processInput,
+							HttpServletRequest request) throws IOException, ProcessNotFoundException {
+
+		final byte[] rawInput;
+		String encoding = request.getCharacterEncoding();
+		if(encoding == null) encoding = "UTF-8";
+
+		if(processInput.getRaw() != null) {
+			rawInput = Base64.getDecoder().decode(processInput.getRaw());
+		}else if(processInput.getInput() != null) {
+			rawInput = replaceSpecialCharacters(processInput.getInput()).getBytes(encoding);
+		} else {
+			return;	//NO INPUT?!
+		}
+
+		processManager.sendInput(pid, rawInput);
+	}
+
+	private String replaceSpecialCharacters(String input) {
+		return input.replace("\\\t", "\t")
+				  .replace("\\\t", "\t")
+				  .replace("\\\b", "\b")
+				  .replace("\\\n", "\n")
+				  .replace("\\\r", "\r")
+				  .replace("\\\f", "\f");
 	}
 }

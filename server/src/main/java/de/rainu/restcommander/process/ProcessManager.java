@@ -11,5 +11,7 @@ public interface ProcessManager {
 
 	String createProcess(String command, List<String> arguments, Map<String, String> environment, String workingDirectory) throws IOException;
 
-	int sendSignal(String pid, String signal) throws IOException;
+	int sendSignal(String pid, String signal) throws IOException, ProcessNotFoundException;
+
+	void sendInput(String pid, byte[] rawInput) throws IOException, ProcessNotFoundException;
 }
