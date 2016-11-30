@@ -4,15 +4,11 @@ import de.rainu.restcommander.model.Process;
 import org.apache.commons.exec.*;
 import org.apache.commons.io.FileUtils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -21,6 +17,19 @@ public class LinuxProcessManager implements ProcessManager{
 	private static final Pattern SIGNAL_PATTERN = Pattern.compile("[0-9]+");
 
 	private Map<String, ProcessHandle> processHandles = new HashMap<>();
+
+	private final File processOutputDir;
+
+	public LinuxProcessManager() {
+		try {
+			this.processOutputDir = File.createTempFile("process_output", "");
+			this.processOutputDir.delete();
+			this.processOutputDir.mkdir();
+			this.processOutputDir.deleteOnExit();
+		} catch (IOException e) {
+			throw new RuntimeException("Could not create temp directory!", e);
+		}
+	}
 
 	@Override
 	public List<Process> listProcess() throws IOException {
@@ -131,6 +140,90 @@ public class LinuxProcessManager implements ProcessManager{
 
 		handle.getStdin().write(rawInput);
 		handle.getStdin().flush();
+	}
+
+	@Override
+	public Data readOutput(String pid, Long start) throws IOException, ProcessNotFoundException {
+		return read(pid, start, true);
+	}
+
+	@Override
+	public Data readError(String pid, Long start) throws IOException, ProcessNotFoundException {
+		return read(pid, start, false);
+	}
+
+	private Data read(String pid, Long startRange, boolean stdout) throws IOException, ProcessNotFoundException {
+		checkPid(pid);
+
+		if(!processHandles.containsKey(pid)) {
+			// i can only read input from process which i started
+			throw new ProcessNotFoundException(pid);
+		}
+
+		InputStream is = getAlreadyRead(pid, startRange, stdout);
+		if(is != null) {
+			return readFrom(startRange, is);
+		}
+
+		final Data data = readFrom(pid, stdout);
+		save(pid, data, stdout);
+
+		return data;
+	}
+
+	private InputStream getAlreadyRead(String pid, Long startRange, boolean stdout) throws FileNotFoundException {
+		File file = stdout ? getStdOutFile(pid) : getStdErrFile(pid);
+
+		if(file.length() < startRange) {
+			return null;
+		}
+
+		return new FileInputStream(file);
+	}
+
+	private void save(String pid, Data data, boolean stdout) throws IOException {
+		File file = stdout ? getStdOutFile(pid) : getStdErrFile(pid);
+
+		if(file.exists()) file.createNewFile();
+
+		FileOutputStream fos = new FileOutputStream(file, true);
+
+		fos.write(data.content, 0, data.read);
+		fos.close();
+	}
+
+	private File getStdOutFile(String pid) {
+		return new File(this.processOutputDir, pid + ".out");
+	}
+
+	private File getStdErrFile(String pid) {
+		return new File(this.processOutputDir, pid + ".err");
+	}
+
+	private Data readFrom(String pid, boolean stdout) throws IOException {
+		final ProcessHandle handle = processHandles.get(pid);
+		BufferedInputStream reader = new BufferedInputStream(stdout ? handle.getStdout() : handle.getStderr());
+		if(reader.available() <= 0) {
+			return new Data(new byte[]{}, 0);
+		}
+
+		byte[] content = new byte[8192];
+		final int read = reader.read(content);
+
+		return new Data(content, read);
+	}
+
+	private Data readFrom(Long startRange, InputStream is) throws IOException {
+		is.skip(startRange);
+
+		byte[] content = new byte[8192];
+		try {
+			final int read = is.read(content);
+
+			return new Data(content, read);
+		}finally {
+			is.close();
+		}
 	}
 
 	private void checkPid(String pid) throws ProcessNotFoundException {
