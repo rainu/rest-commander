@@ -11,11 +11,10 @@ import org.springframework.context.annotation.Configuration;
 public class ProcessConfig {
 
 	@Bean
-	public ProcessManager processManager(
-			  @Value("${os.name}") String os){
-
+	public ProcessManager processManager(@Value("${os.name}") String os) {
 		switch (os.toLowerCase()) {
-			case "linux": return new LinuxProcessManager();
+			case "linux":
+				return new LinuxProcessManager();
 			default:
 				throw new NoSuchBeanDefinitionException("No ProcessManager found for OS '" + os + "'!");
 		}

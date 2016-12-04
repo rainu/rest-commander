@@ -26,6 +26,20 @@ public interface ProcessManager {
 	Process getProcess(String pid) throws ProcessNotFoundException;
 
 	/**
+	 * Starts a new process as given user.
+	 *
+	 * @param username         The name of the user which starts the process
+	 * @param password         The password of the user
+	 * @param command          The command
+	 * @param arguments        The commands arguments
+	 * @param environment      The environment variables of the process
+	 * @param workingDirectory The working directory of the process
+	 * @return The process id of the created process.
+	 * @throws IOException
+	 */
+	String startProcessAsUser(String username, String password, String command, List<String> arguments, Map<String, String> environment, String workingDirectory) throws IOException;
+
+	/**
 	 * Starts a new process.
 	 *
 	 * @param command          The command
@@ -35,7 +49,7 @@ public interface ProcessManager {
 	 * @return The process id of the created process.
 	 * @throws IOException
 	 */
-	String createProcess(String command, List<String> arguments, Map<String, String> environment, String workingDirectory) throws IOException;
+	String startProcess(String command, List<String> arguments, Map<String, String> environment, String workingDirectory) throws IOException;
 
 	/**
 	 * Sends a signal to the given process.

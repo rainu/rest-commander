@@ -32,15 +32,17 @@ public class AuthenticationController {
 	@RequestMapping(path = LOGIN_PATH, method = RequestMethod.POST)
 	@ResponseBody
 	public Object login(@RequestBody AuthDTO auth) {
-		User user = userStore.get(auth.getUsername());
-		if (user != null && user.getPassword().equals(auth.getPassword())) {
-			final String token = UUID.randomUUID().toString();
-			tokenStore.put(token, auth.getUsername());
-
-			return new LoginResponse(token);
+		if(!userStore.checkPassword(auth.getUsername(), auth.getPassword())) {
+			return new ResponseEntity(new ErrorResponse("Username or password are incorrect!"), HttpStatus.BAD_REQUEST);
 		}
 
-		return new ResponseEntity(new ErrorResponse("Username or password are incorrect!"), HttpStatus.BAD_REQUEST);
+		User user = userStore.get(auth.getUsername());
+		user.setPassword(auth.getPassword());
+
+		final String token = UUID.randomUUID().toString();
+		tokenStore.put(token, auth.getUsername());
+
+		return new LoginResponse(token);
 	}
 
 	@RequestMapping(path = LOGOUT_PATH, method = RequestMethod.POST)

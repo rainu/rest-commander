@@ -5,6 +5,8 @@ import de.rainu.restcommander.config.security.AuthFilter;
 import de.rainu.restcommander.model.dto.ErrorResponse;
 import de.rainu.restcommander.model.dto.LoginResponse;
 import org.junit.Test;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 
 import javax.ws.rs.core.MediaType;

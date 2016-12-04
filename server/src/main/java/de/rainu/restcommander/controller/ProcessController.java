@@ -1,6 +1,8 @@
 package de.rainu.restcommander.controller;
 
+import de.rainu.restcommander.config.security.AuthenticationToken;
 import de.rainu.restcommander.config.security.annotation.IsAdmin;
+import de.rainu.restcommander.config.security.annotation.IsUser;
 import de.rainu.restcommander.model.Process;
 import de.rainu.restcommander.model.dto.ProcessCreateResponse;
 import de.rainu.restcommander.model.dto.ProcessInputRequest;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@IsAdmin
+@IsUser
 @RestController
 @RequestMapping(path = ProcessController.ENDPOINT)
 public class ProcessController {
@@ -40,8 +42,29 @@ public class ProcessController {
 
 	@RequestMapping(method = RequestMethod.POST)
 	@ResponseBody
-	public ProcessCreateResponse create(@RequestBody ProcessRequest process) throws IOException {
-		final String pid = processManager.createProcess(process.getCmd(),
+	public ProcessCreateResponse createAsUser(
+			  AuthenticationToken authToken,
+			  @RequestBody ProcessRequest process) throws IOException {
+
+		final String pid = processManager.startProcessAsUser(
+				  authToken.getUser().getUsername(),
+				  authToken.getUser().getPassword(),
+				  process.getCmd(),
+				  process.getArgs(),
+				  process.getEnv(),
+				  process.getWorkdir());
+
+		return new ProcessCreateResponse(pid);
+	}
+
+	@IsAdmin
+	@RequestMapping(path = "/admin", method = RequestMethod.POST)
+	@ResponseBody
+	public ProcessCreateResponse create(
+			  @RequestBody ProcessRequest process) throws IOException {
+
+		final String pid = processManager.startProcess(
+				  process.getCmd(),
 				  process.getArgs(),
 				  process.getEnv(),
 				  process.getWorkdir());
@@ -67,14 +90,14 @@ public class ProcessController {
 
 		final byte[] rawInput;
 		String encoding = request.getCharacterEncoding();
-		if(encoding == null) encoding = "UTF-8";
+		if (encoding == null) encoding = "UTF-8";
 
-		if(processInput.getRaw() != null) {
+		if (processInput.getRaw() != null) {
 			rawInput = Base64.getDecoder().decode(processInput.getRaw());
-		}else if(processInput.getInput() != null) {
+		} else if (processInput.getInput() != null) {
 			rawInput = replaceSpecialCharacters(processInput.getInput()).getBytes(encoding);
 		} else {
-			return;	//NO INPUT?!
+			return;   //NO INPUT?!
 		}
 
 		processManager.sendInput(pid, rawInput);
@@ -94,7 +117,7 @@ public class ProcessController {
 
 		final Matcher rangeMatcher = RANGE_PATTERN.matcher(range);
 
-		if(!rangeMatcher.matches()) {
+		if (!rangeMatcher.matches()) {
 			return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE).build();
 		}
 
@@ -113,11 +136,11 @@ public class ProcessController {
 		}
 
 		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-		  .contentLength(rawData.read)
-		  .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
-		  .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-		  .header(HttpHeaders.CONTENT_RANGE, "bytes " + range + (startRange + rawData.read) + "/*")
-		.body(rawData.content);
+				  .contentLength(rawData.read)
+				  .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+				  .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+				  .header(HttpHeaders.CONTENT_RANGE, "bytes " + range + (startRange + rawData.read) + "/*")
+				  .body(rawData.content);
 	}
 
 	private String replaceSpecialCharacters(String input) {

@@ -78,7 +78,7 @@ public class CommandExecutor {
 		}
 	}
 
-	static class StreamInterceptor implements ExecuteStreamHandler {
+	class StreamInterceptor implements ExecuteStreamHandler {
 		boolean triggerd = false;
 		OutputStream stdin;
 		InputStream stdout;
@@ -116,28 +116,4 @@ public class CommandExecutor {
 		}
 	}
 
-//	static class ExecuteResultHandlerWrapper implements ExecuteResultHandler {
-//		private final ExecuteResultHandler handler;
-//		boolean triggerd = false;
-//
-//		public ExecuteResultHandlerWrapper(ExecuteResultHandler handler) {
-//			this.handler = handler;
-//		}
-//
-//		public void onProcessComplete(int exitValue) {
-//			synchronized (this) {
-//				notify();
-//			}
-//			triggerd = true;
-//			handler.onProcessComplete(exitValue);
-//		}
-//
-//		public void onProcessFailed(ExecuteException e) {
-//			synchronized (this) {
-//				notify();
-//			}
-//			triggerd = true;
-//			handler.onProcessFailed(e);
-//		}
-//	}
 }

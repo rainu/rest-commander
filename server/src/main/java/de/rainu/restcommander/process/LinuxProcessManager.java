@@ -2,6 +2,7 @@ package de.rainu.restcommander.process;
 
 import de.rainu.restcommander.model.Process;
 import org.apache.commons.exec.*;
+import org.apache.commons.exec.util.StringUtils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class LinuxProcessManager implements ProcessManager{
+public class LinuxProcessManager implements ProcessManager {
 	private static final Pattern PID_PATTERN = Pattern.compile("[0-9]+");
 	private static final Pattern SIGNAL_PATTERN = Pattern.compile("[0-9]+");
 
@@ -89,19 +90,55 @@ public class LinuxProcessManager implements ProcessManager{
 	}
 
 	@Override
-	public String createProcess(String command, List<String> arguments,
-										 Map<String, String> environment, String workingDirectory) throws IOException {
+	public String startProcess(String command, List<String> arguments,
+										Map<String, String> environment, String workingDirectory) throws IOException {
 
 		CommandLine line = new CommandLine(command);
 		if(arguments != null) arguments.stream().forEach(line::addArgument);
 
+		return startProcess(line, environment, workingDirectory);
+	}
+
+	@Override
+	public String startProcessAsUser(String username, String password,
+												String command, List<String> arguments,
+												Map<String, String> environment, String workingDirectory) throws IOException {
+
+		if(username == null || password == null) {
+			throw new IllegalArgumentException("Username and password are mandatory!");
+		}
+
+		CommandLine line = new CommandLine("su");
+		line.addArgument(username);
+		line.addArgument("-c");
+
+		StringBuffer sb = new StringBuffer();
+		sb.append(command);
+		if(arguments != null) arguments.stream().forEach(a -> {
+			sb.append(" \"");
+			sb.append(StringUtils.quoteArgument(a));
+			sb.append("\"");
+		});
+		line.addArgument(sb.toString(), false);
+
+		final String pid = startProcess(line, environment, workingDirectory);
+
+		if(pid != null) {
+			processHandles.get(pid).getStdin().write((password + "\n").getBytes());
+			processHandles.get(pid).getStdin().flush();
+		}
+
+		return pid;
+	}
+
+	private String startProcess(CommandLine command, Map<String, String> environment, String workingDirectory) throws IOException {
 		CommandExecutor executor = new CommandExecutor(workingDirectory);
 
 		final ProcessHandle handle;
 		if(environment != null) {
-			handle = executor.execute(line, environment, new DefaultExecuteResultHandler());
+			handle = executor.execute(command, environment, new DefaultExecuteResultHandler());
 		} else {
-			handle = executor.execute(line, new DefaultExecuteResultHandler());
+			handle = executor.execute(command, new DefaultExecuteResultHandler());
 		}
 
 		final String pid = extractPid(handle.getProcess());
@@ -174,7 +211,7 @@ public class LinuxProcessManager implements ProcessManager{
 	private InputStream getAlreadyRead(String pid, Long startRange, boolean stdout) throws FileNotFoundException {
 		File file = stdout ? getStdOutFile(pid) : getStdErrFile(pid);
 
-		if(file.length() < startRange) {
+		if(!file.exists() || file.length() < startRange) {
 			return null;
 		}
 
