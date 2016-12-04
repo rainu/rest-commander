@@ -4,6 +4,9 @@ public class ProcessCreateResponse {
 	private String pid;
 	private boolean created;
 
+	public ProcessCreateResponse() {
+	}
+
 	public ProcessCreateResponse(String pid) {
 		this.pid = pid;
 		this.created = pid != null;

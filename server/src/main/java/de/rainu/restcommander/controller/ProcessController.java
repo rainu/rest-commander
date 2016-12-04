@@ -72,7 +72,7 @@ public class ProcessController {
 		return new ProcessCreateResponse(pid);
 	}
 
-	@RequestMapping(path = "/{pid}/{signal}", method = RequestMethod.PATCH)
+	@RequestMapping(path = "/{pid}/{signal}", method = RequestMethod.POST)
 	@ResponseBody
 	public ProcessSignalResponse signal(@PathVariable("pid") String pid,
 													@PathVariable("signal") String signal) throws IOException, ProcessNotFoundException {
@@ -145,7 +145,6 @@ public class ProcessController {
 
 	private String replaceSpecialCharacters(String input) {
 		return input.replace("\\\t", "\t")
-				  .replace("\\\t", "\t")
 				  .replace("\\\b", "\b")
 				  .replace("\\\n", "\n")
 				  .replace("\\\r", "\r")

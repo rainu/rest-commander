@@ -11,4 +11,12 @@ public class ProcessInputRequest {
 	public String getRaw() {
 		return raw;
 	}
+
+	public void setInput(String input) {
+		this.input = input;
+	}
+
+	public void setRaw(String raw) {
+		this.raw = raw;
+	}
 }

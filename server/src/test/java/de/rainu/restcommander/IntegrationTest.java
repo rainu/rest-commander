@@ -32,14 +32,14 @@ public abstract class IntegrationTest {
 	protected ObjectMapper mapper;
 
 	@Before
-	public void setup() {
+	public void _setup() {
 		client = Client.create();
 		baseUrl = "http://localhost:" + randomServerPort + "/";
 		mapper = new ObjectMapper();
 	}
 
 	@After
-	public void clean() {
+	public void _clean() {
 		client.destroy();
 	}
 
