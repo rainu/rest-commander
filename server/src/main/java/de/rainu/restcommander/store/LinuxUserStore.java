@@ -35,7 +35,7 @@ public class LinuxUserStore implements UserStore {
 			List<GrantedAuthority> authorityList = new ArrayList<>();
 			authorityList.add(UserRole.USER);
 			authorityList.add((GrantedAuthority) () -> getUserAndGroup().get(username));
-			if(System.getenv("user.name").equals(username) || getRootUsers().contains(username)){
+			if(System.getProperty("user.name").equals(username) || getRootUsers().contains(username)){
 				authorityList.add(UserRole.ADMIN);
 			}
 
@@ -80,27 +80,39 @@ public class LinuxUserStore implements UserStore {
 		});
 
 		try {
-			return executor.execute(line) == 0;
+			return execute(executor, line) == 0;
 		} catch (IOException e) {
 			return false;
 		}
 	}
 
-	Set<String> getRootUsers(){
+	int execute(DefaultExecutor executor, CommandLine line) throws IOException {
+		return executor.execute(line);
+	}
+
+	private Set<String> getRootUsers(){
+		return getRootUsers(ETC_GROUP);
+	}
+
+	Set<String> getRootUsers(Path group){
 		if(rootUsers == null) {
-			rootUsers = readRootFromGroup();
+			rootUsers = readRootFromGroup(group);
 		}
 
 		return rootUsers;
 	}
 
-	Map<String, String> getUserAndGroup() {
+	private Map<String, String> getUserAndGroup() {
+		return getUserAndGroup(ETC_PASSWD, ETC_GROUP);
+	}
+
+	Map<String, String> getUserAndGroup(Path passwd, Path group) {
 		if (userAndGroup == null) {
 			//key -> username, value -> groupId
-			Map<String, String> passwdEntries = readFromPasswd();
+			Map<String, String> passwdEntries = readFromPasswd(passwd);
 
 			//key -> groupId, value -> groupName
-			Map<String, String> groupEntries = readFromGroup();
+			Map<String, String> groupEntries = readFromGroup(group);
 
 			userAndGroup = passwdEntries.entrySet().stream()
 					  .collect(Collectors.toMap(
@@ -112,9 +124,9 @@ public class LinuxUserStore implements UserStore {
 		return userAndGroup;
 	}
 
-	Map<String, String> readFromPasswd() {
+	Map<String, String> readFromPasswd(Path passwdPath) {
 		try {
-			return Files.lines(ETC_PASSWD)
+			return Files.lines(passwdPath)
 					  .map(entry -> entry.split(":"))
 					  .collect(Collectors.toMap(s -> s[0], s -> s[3]));
 		} catch (IOException e) {
@@ -123,9 +135,9 @@ public class LinuxUserStore implements UserStore {
 		return new HashMap<>();
 	}
 
-	Map<String, String> readFromGroup(){
+	Map<String, String> readFromGroup(Path groupPath){
 		try {
-			return Files.lines(ETC_GROUP)
+			return Files.lines(groupPath)
 					  .map(entry -> entry.split(":"))
 					  .collect(Collectors.toMap(s -> s[2], s -> s[0]));
 		} catch (IOException e) {
@@ -134,11 +146,11 @@ public class LinuxUserStore implements UserStore {
 		return new HashMap<>();
 	}
 
-	Set<String> readRootFromGroup(){
+	Set<String> readRootFromGroup(Path groupPath){
 		Set<String> result = new HashSet<>();
 
 		try {
-			Files.lines(ETC_GROUP)
+			Files.lines(groupPath)
 				  .filter(line -> line.startsWith("root:"))
 				  .map(entry -> entry.split(":")[3])
 				  .filter(roots -> !"".equals(roots))
