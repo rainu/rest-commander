@@ -356,6 +356,7 @@ _Gets a list of all running processes._
   
   * **Code:** 200 <br />
     **Content:** 
+    
     ```json
     {
         "returnCode": 0
@@ -517,6 +518,7 @@ _Gets a list of all running processes._
   
   * **Code:** 200 <br />
     **Content:** 
+    
     ```json
     { 
       "id": "1",
@@ -533,7 +535,7 @@ _Gets a list of all running processes._
  
 * **Error Response:**
   
-  * **Code:** 401 UNAUTHORIZED <br/>
+  * **Code:** 401 UNAUTHORIZED <br />
     **Content:** 
     ```json
     {
@@ -595,8 +597,6 @@ _Gets a list of all running processes._
   
 * **Success Response:**
   
-  <_What should the status code be on success and is there any returned data? This is useful when people need to to know what their callbacks should expect!_>
-
   * **Code:** 206 <br />
     **Content:** `the raw output` <br />
     **Header** 
