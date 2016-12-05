@@ -79,10 +79,10 @@ public class ProcessControllerIT extends IntegrationTest {
 		doReturn("1312").when(processManager).startProcessAsUser(anyString(), anyString(), anyString(), anyList(), anyMap(), anyString());
 
 		ProcessRequest processRequest = new ProcessRequest();
-		processRequest.setCmd("command");
-		processRequest.setArgs(Arrays.asList("arg1", "arg2"));
-		processRequest.setEnv(new HashMap<>());
-		processRequest.setWorkdir("workdir");
+		processRequest.setCommand("command");
+		processRequest.setArguments(Arrays.asList("arg1", "arg2"));
+		processRequest.setEnvironment(new HashMap<>());
+		processRequest.setWorkDirectory("workdir");
 
 		ClientResponse response = adminRequest(baseUrl + ENDPOINT)
 				  .type(MediaType.APPLICATION_JSON)
@@ -95,8 +95,8 @@ public class ProcessControllerIT extends IntegrationTest {
 		assertEquals("1312", result.getPid());
 		verify(processManager, times(1)).startProcessAsUser(
 				  eq("admin"), eq("admin"),
-				  eq(processRequest.getCmd()), eq(processRequest.getArgs()),
-				  eq(processRequest.getEnv()), eq(processRequest.getWorkdir())
+				  eq(processRequest.getCommand()), eq(processRequest.getArguments()),
+				  eq(processRequest.getEnvironment()), eq(processRequest.getWorkDirectory())
 		);
 	}
 
@@ -115,10 +115,10 @@ public class ProcessControllerIT extends IntegrationTest {
 		doReturn("1312").when(processManager).startProcess(anyString(), anyList(), anyMap(), anyString());
 
 		ProcessRequest processRequest = new ProcessRequest();
-		processRequest.setCmd("command");
-		processRequest.setArgs(Arrays.asList("arg1", "arg2"));
-		processRequest.setEnv(new HashMap<>());
-		processRequest.setWorkdir("workdir");
+		processRequest.setCommand("command");
+		processRequest.setArguments(Arrays.asList("arg1", "arg2"));
+		processRequest.setEnvironment(new HashMap<>());
+		processRequest.setWorkDirectory("workdir");
 
 		ClientResponse response = adminRequest(baseUrl + ENDPOINT + "/admin")
 				  .type(MediaType.APPLICATION_JSON)
@@ -130,8 +130,8 @@ public class ProcessControllerIT extends IntegrationTest {
 		assertTrue(result.isCreated());
 		assertEquals("1312", result.getPid());
 		verify(processManager, times(1)).startProcess(
-				  eq(processRequest.getCmd()), eq(processRequest.getArgs()),
-				  eq(processRequest.getEnv()), eq(processRequest.getWorkdir())
+				  eq(processRequest.getCommand()), eq(processRequest.getArguments()),
+				  eq(processRequest.getEnvironment()), eq(processRequest.getWorkDirectory())
 		);
 	}
 

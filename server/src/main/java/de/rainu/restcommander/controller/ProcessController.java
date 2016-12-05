@@ -50,10 +50,10 @@ public class ProcessController {
 		final String pid = processManager.startProcessAsUser(
 				  authToken.getUser().getUsername(),
 				  authToken.getUser().getPassword(),
-				  process.getCmd(),
-				  process.getArgs(),
-				  process.getEnv(),
-				  process.getWorkdir());
+				  process.getCommand(),
+				  process.getArguments(),
+				  process.getEnvironment(),
+				  process.getWorkDirectory());
 
 		return new ProcessCreateResponse(pid);
 	}
@@ -65,10 +65,10 @@ public class ProcessController {
 			  @RequestBody ProcessRequest process) throws IOException {
 
 		final String pid = processManager.startProcess(
-				  process.getCmd(),
-				  process.getArgs(),
-				  process.getEnv(),
-				  process.getWorkdir());
+				  process.getCommand(),
+				  process.getArguments(),
+				  process.getEnvironment(),
+				  process.getWorkDirectory());
 
 		return new ProcessCreateResponse(pid);
 	}

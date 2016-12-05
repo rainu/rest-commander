@@ -4,41 +4,41 @@ import java.util.List;
 import java.util.Map;
 
 public class ProcessRequest {
-	private Map<String, String> env;
-	private String workdir;
-	private String cmd;
-	private List<String> args;
+	private Map<String, String> environment;
+	private String workDirectory;
+	private String command;
+	private List<String> arguments;
 
 
-	public Map<String, String> getEnv() {
-		return env;
+	public Map<String, String> getEnvironment() {
+		return environment;
 	}
 
-	public void setEnv(Map<String, String> env) {
-		this.env = env;
+	public void setEnvironment(Map<String, String> environment) {
+		this.environment = environment;
 	}
 
-	public String getWorkdir() {
-		return workdir;
+	public String getWorkDirectory() {
+		return workDirectory;
 	}
 
-	public void setWorkdir(String workdir) {
-		this.workdir = workdir;
+	public void setWorkDirectory(String workDirectory) {
+		this.workDirectory = workDirectory;
 	}
 
-	public String getCmd() {
-		return cmd;
+	public String getCommand() {
+		return command;
 	}
 
-	public void setCmd(String cmd) {
-		this.cmd = cmd;
+	public void setCommand(String command) {
+		this.command = command;
 	}
 
-	public List<String> getArgs() {
-		return args;
+	public List<String> getArguments() {
+		return arguments;
 	}
 
-	public void setArgs(List<String> args) {
-		this.args = args;
+	public void setArguments(List<String> arguments) {
+		this.arguments = arguments;
 	}
 }
