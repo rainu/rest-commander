@@ -4,6 +4,7 @@ import de.rainu.restcommander.config.security.AuthenticationToken;
 import de.rainu.restcommander.config.security.annotation.IsAdmin;
 import de.rainu.restcommander.config.security.annotation.IsUser;
 import de.rainu.restcommander.model.Process;
+import de.rainu.restcommander.model.UserRole;
 import de.rainu.restcommander.model.dto.ProcessCreateResponse;
 import de.rainu.restcommander.model.dto.ProcessInputRequest;
 import de.rainu.restcommander.model.dto.ProcessRequest;
@@ -74,8 +75,11 @@ public class ProcessController {
 
 	@RequestMapping(path = "/{pid}/{signal}", method = RequestMethod.POST)
 	@ResponseBody
-	public ProcessSignalResponse signal(@PathVariable("pid") String pid,
+	public ProcessSignalResponse signal(AuthenticationToken token,
+			  										@PathVariable("pid") String pid,
 													@PathVariable("signal") String signal) throws IOException, ProcessNotFoundException {
+
+		checkProcessOwner(pid, token);
 
 		ProcessSignalResponse response = new ProcessSignalResponse();
 		response.setReturnCode(processManager.sendSignal(pid, signal));
@@ -84,9 +88,12 @@ public class ProcessController {
 	}
 
 	@RequestMapping(path = "/{pid}", method = RequestMethod.POST)
-	public void input(@PathVariable("pid") String pid,
+	public void input(AuthenticationToken token,
+			  				@PathVariable("pid") String pid,
 							@RequestBody ProcessInputRequest processInput,
 							HttpServletRequest request) throws IOException, ProcessNotFoundException {
+
+		checkProcessOwner(pid, token);
 
 		final byte[] rawInput;
 		String encoding = request.getCharacterEncoding();
@@ -111,9 +118,12 @@ public class ProcessController {
 
 	@RequestMapping(path = "/{pid}/{stream}", method = RequestMethod.GET, produces = "application/octet-stream")
 	public ResponseEntity output(
+			  AuthenticationToken token,
 			  @PathVariable("pid") String pid,
 			  @PathVariable("stream") String stream,
 			  @RequestHeader(value = "Range", defaultValue = "0-") String range) throws IOException, ProcessNotFoundException {
+
+		checkProcessOwner(pid, token);
 
 		final Matcher rangeMatcher = RANGE_PATTERN.matcher(range);
 
@@ -141,6 +151,20 @@ public class ProcessController {
 				  .header(HttpHeaders.ACCEPT_RANGES, "bytes")
 				  .header(HttpHeaders.CONTENT_RANGE, "bytes " + range + (startRange + rawData.read) + "/*")
 				  .body(rawData.content);
+	}
+
+	void checkProcessOwner(String pid, AuthenticationToken token) throws ProcessNotFoundException {
+		boolean isAdmin = token.getUser().getRoles().stream()
+				  .filter(r -> UserRole.ADMIN.getAuthority().equals(r.getAuthority()))
+				  .count() > 0;
+
+		if(isAdmin){
+			return;	//the admin can control all processes!
+		}
+
+		if(!processManager.getProcess(pid).getUser().equals(token.getUser().getUsername())){
+			throw new ProcessNotFoundException(pid);
+		}
 	}
 
 	private String replaceSpecialCharacters(String input) {

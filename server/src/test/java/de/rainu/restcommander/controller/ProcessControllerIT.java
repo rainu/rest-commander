@@ -27,9 +27,7 @@ import static de.rainu.restcommander.controller.ProcessController.ENDPOINT;
 import static org.junit.Assert.*;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class ProcessControllerIT extends IntegrationTest {
 
