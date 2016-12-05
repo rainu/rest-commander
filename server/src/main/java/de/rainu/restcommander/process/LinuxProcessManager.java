@@ -17,7 +17,7 @@ public class LinuxProcessManager implements ProcessManager {
 	private static final Pattern PID_PATTERN = Pattern.compile("[0-9]+");
 	private static final Pattern SIGNAL_PATTERN = Pattern.compile("[0-9]+");
 
-	private Map<String, ProcessHandle> processHandles = new HashMap<>();
+	Map<String, ProcessHandle> processHandles = new HashMap<>();
 
 	private final File processOutputDir;
 
@@ -131,7 +131,7 @@ public class LinuxProcessManager implements ProcessManager {
 		return pid;
 	}
 
-	private String startProcess(CommandLine command, Map<String, String> environment, String workingDirectory) throws IOException {
+	String startProcess(CommandLine command, Map<String, String> environment, String workingDirectory) throws IOException {
 		CommandExecutor executor = new CommandExecutor(workingDirectory);
 
 		final ProcessHandle handle;

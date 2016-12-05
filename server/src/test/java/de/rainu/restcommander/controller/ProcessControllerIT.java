@@ -65,20 +65,7 @@ public class ProcessControllerIT extends IntegrationTest {
 		assertTrue(process.isEmpty());
 
 		verify(processManager, times(1)).listProcess();
-//
-//		//find current process
-//		final String ownPID = getOwnPID();
-//		Process ownProccess = process.stream().filter(p -> p.getId().equalsIgnoreCase(ownPID)).findFirst().get();
-//
-//		assertTrue(ownProccess.getCmdline().contains("java"));
-//		System.getenv().entrySet().stream().forEach(env -> {
-//			assertEquals(env.getValue(), ownProccess.getEnv().get(env.getKey()));
-//		});
 	}
-
-//	private String getOwnPID(){
-//		return ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
-//	}
 
 	@Test
 	public void createAsUser_accessDenied() throws JsonProcessingException {
