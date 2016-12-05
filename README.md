@@ -47,6 +47,7 @@ A Rest-Application which can execute and manage processes.
   
   * **Code:** 200 <br />
     **Content:** 
+    
     ```json
     { 
       "token":"<token>"
@@ -57,6 +58,7 @@ A Rest-Application which can execute and manage processes.
   
   * **Code:** 400 Bad Request <br/>
     **Content:** 
+    
     ```json
     {
       "message":"Username or password are incorrect!"
@@ -95,6 +97,7 @@ A Rest-Application which can execute and manage processes.
   
   * **Code:** 401 UNAUTHORIZED <br/>
       **Content:** 
+      
       ```json
       {
         "error":"Unauthorized", 
@@ -132,6 +135,7 @@ _Gets a list of all running processes._
 
   * **Code:** 200 <br />
     **Content:** 
+    
     ```json
     [{ 
       "id": "1",
@@ -160,6 +164,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br/>
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -169,6 +174,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -222,6 +228,7 @@ _Gets a list of all running processes._
   
   * **Code:** 200 <br />
     **Content:** 
+    
     ```json
     {
         "pid": "1312",
@@ -233,6 +240,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br/>
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -242,6 +250,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -296,6 +305,7 @@ _Gets a list of all running processes._
   
   * **Code:** 200 <br />
     **Content:** 
+    
     ```json
     {
         "pid": "1312",
@@ -307,6 +317,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br/>
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -316,6 +327,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -367,6 +379,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br/>
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -376,6 +389,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -385,6 +399,7 @@ _Gets a list of all running processes._
     
   * **Code:** 404 NOT FOUND <br />
     **Content:** 
+    
     ```json
     {
       "error":"Not Found", 
@@ -453,6 +468,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br/>
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -462,6 +478,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -471,6 +488,7 @@ _Gets a list of all running processes._
     
   * **Code:** 404 NOT FOUND <br />
     **Content:** 
+    
     ```json
     {
       "error":"Not Found", 
@@ -537,6 +555,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br />
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -546,6 +565,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -555,6 +575,7 @@ _Gets a list of all running processes._
     
   * **Code:** 404 NOT FOUND <br />
     **Content:** 
+    
     ```json
     {
       "error":"Not Found", 
@@ -608,6 +629,7 @@ _Gets a list of all running processes._
   
   * **Code:** 401 UNAUTHORIZED <br/>
     **Content:** 
+    
     ```json
     {
       "error":"Unauthorized", 
@@ -617,6 +639,7 @@ _Gets a list of all running processes._
 
   * **Code:** 403 FORBIDDEN <br />
     **Content:** 
+    
     ```json
     {
       "error":"Forbidden", 
@@ -626,6 +649,7 @@ _Gets a list of all running processes._
     
   * **Code:** 404 NOT FOUND <br />
     **Content:** 
+    
     ```json
     {
       "error":"Not Found", 
