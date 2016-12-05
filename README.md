@@ -2,13 +2,111 @@
 A Rest-Application which can execute and manage processes.
 
 # API
-1. [List Process](#list-process)
-2. [Start Process](#start-process)
-3. [Start Process (as admin)](#start-process-as-admin)
-4. [Signal](#signal)
-5. [Input](#input)
-6. [Status](#status)
-7. [Output](#output)
+
+- __Authentication__
+    1. [Login](#login)
+    2. [Logout](#logout)
+
+- __Process__
+    1. [List Process](#list-process)
+    2. [Start Process](#start-process)
+    3. [Start Process (as admin)](#start-process-as-admin)
+    4. [Signal](#signal)
+    5. [Input](#input)
+    6. [Status](#status)
+    7. [Output](#output)
+
+## Login
+
+  _Login as a user._
+
+* **URL**
+
+  _/auth/login_
+
+* **Method:**
+
+  _POST_
+  
+* **Header:**
+
+  **Required:**
+  
+  `Content-Type: application/json`
+
+* **Data Params**
+
+  ```json
+  {
+    "username": "root",
+    "password": "toor"
+  }
+  ```
+
+* **Success Response:**
+  
+  * **Code:** 200 <br />
+    **Content:** 
+    ```json
+    { 
+      "token":"<token>"
+    }
+    ```
+ 
+* **Error Response:**
+  
+  * **Code:** 400 Bad Request <br/>
+    **Content:** 
+    ```json
+    {
+      "message":"Username or password are incorrect!"
+    }
+    ```
+
+* **Sample Call:**
+
+  ```bash
+  curl -X POST -H 'Content-Type: application/json' http://localhost:8080/auth/login --data '{"username": "root", "password": "toor"}'
+  ```
+
+## Logout
+
+  _Logout a user._
+
+* **URL**
+
+  _/auth/logout_
+
+* **Method:**
+
+  _POST_
+  
+* **Header:**
+
+  **Required:**
+  
+  `x-auth-token=[token]`
+
+* **Success Response:**
+  
+  * **Code:** 200 
+ 
+* **Error Response:**
+  
+  * **Code:** 401 UNAUTHORIZED <br/>
+      **Content:** 
+      ```json
+      {
+        "error":"Unauthorized", 
+        "message":"Authentication Failed: Invalid token - <token>"
+      }
+      ```
+
+* **Sample Call:**
+
+  ```bash
+  curl -X POST -H 'x-auth-token: <token>' http://localhost:8080/auth/logout
+  ```
 
 ## List Process
 
