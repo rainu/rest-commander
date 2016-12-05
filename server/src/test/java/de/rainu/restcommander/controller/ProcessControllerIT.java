@@ -14,7 +14,6 @@ import de.rainu.restcommander.process.ProcessManager;
 import de.rainu.restcommander.process.ProcessNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -214,8 +213,8 @@ public class ProcessControllerIT extends IntegrationTest {
 	public void status_success() throws IOException, ProcessNotFoundException {
 		Process process = new Process();
 		process.setReturnCode(12);
-		process.setEnv(new HashMap<>());
-		process.setCmdline("echo");
+		process.setEnvironment(new HashMap<>());
+		process.setCommandline("echo");
 		process.setId("1312");
 		process.setRunning(false);
 

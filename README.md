@@ -9,7 +9,7 @@ DRAFT: A Rest-Application which can execute and manage processes.
 * Data:
 ```json
 {
-  "env": {
+  "environment": {
     "env1": "value",
     "envN": "valueN"
   },

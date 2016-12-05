@@ -50,11 +50,12 @@ public class LinuxProcessManagerTest {
 		List<Process> processList = toTest.listProcess();
 		assertFalse(processList.isEmpty());
 		assertEquals(1, processList.size());
+		assertEquals(System.getProperty("user.name"), processList.get(0).getUser());
 		assertEquals("1312", processList.get(0).getId());
-		assertEquals("/sbin/init", processList.get(0).getCmdline());
-		assertEquals(2, processList.get(0).getEnv().size());
-		assertEquals("VALUE1", processList.get(0).getEnv().get("ENV_1"));
-		assertEquals("VALUE2", processList.get(0).getEnv().get("ENV_2"));
+		assertEquals("/sbin/init", processList.get(0).getCommandline());
+		assertEquals(2, processList.get(0).getEnvironment().size());
+		assertEquals("VALUE1", processList.get(0).getEnvironment().get("ENV_1"));
+		assertEquals("VALUE2", processList.get(0).getEnvironment().get("ENV_2"));
 	}
 
 	@Test
@@ -64,9 +65,9 @@ public class LinuxProcessManagerTest {
 		final String ownPID = getOwnPID();
 		Process ownProccess = toTest.listProcess().stream().filter(p -> p.getId().equalsIgnoreCase(ownPID)).findFirst().get();
 
-		assertTrue(ownProccess.getCmdline().contains("java"));
+		assertTrue(ownProccess.getCommandline().contains("java"));
 		System.getenv().entrySet().stream().forEach(env -> {
-			assertEquals(env.getValue(), ownProccess.getEnv().get(env.getKey()));
+			assertEquals(env.getValue(), ownProccess.getEnvironment().get(env.getKey()));
 		});
 	}
 
@@ -81,13 +82,14 @@ public class LinuxProcessManagerTest {
 		Process result = toTest.getProcess(getOwnPID());
 
 		assertEquals(getOwnPID(), result.getId());
-		assertTrue(result.getCmdline().contains("java "));
+		assertTrue(result.getCommandline().contains("java "));
 		assertNull(result.getReturnCode());
-		assertEquals(System.getenv(), result.getEnv());
+		assertEquals(System.getenv(), result.getEnvironment());
+		assertEquals(System.getProperty("user.name"), result.getUser());
 	}
 
 	@Test
-	public void startAndReadProcess() throws IOException, ProcessNotFoundException {
+	public void startAndReadProcess() throws IOException, ProcessNotFoundException, InterruptedException {
 		assumeLinux();
 
 		Map<String, String> environment = new HashMap<>();
@@ -95,6 +97,7 @@ public class LinuxProcessManagerTest {
 		environment.put("env2", "value2");
 
 		final String pid = toTest.startProcess("env", null, environment, System.getProperty("java.io.tmpdir"));
+		Thread.sleep(1000);
 		ProcessManager.Data data = toTest.readOutput(pid, 0L);
 
 		environment.entrySet().stream().forEach(env -> {

@@ -4,8 +4,9 @@ import java.util.Map;
 
 public class Process {
 	private String id;
-	private String cmdline;
-	private Map<String, String> env;
+	private String commandline;
+	private String user;
+	private Map<String, String> environment;
 	private boolean running;
 	private Integer returnCode;
 
@@ -17,20 +18,28 @@ public class Process {
 		this.id = id;
 	}
 
-	public String getCmdline() {
-		return cmdline;
+	public String getCommandline() {
+		return commandline;
 	}
 
-	public void setCmdline(String cmdline) {
-		this.cmdline = cmdline;
+	public void setCommandline(String commandline) {
+		this.commandline = commandline;
 	}
 
-	public Map<String, String> getEnv() {
-		return env;
+	public String getUser() {
+		return user;
 	}
 
-	public void setEnv(Map<String, String> env) {
-		this.env = env;
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	public Map<String, String> getEnvironment() {
+		return environment;
+	}
+
+	public void setEnvironment(Map<String, String> environment) {
+		this.environment = environment;
 	}
 
 	public boolean isRunning() {

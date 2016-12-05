@@ -8,7 +8,10 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.UserPrincipal;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,8 +54,16 @@ public class LinuxProcessManager implements ProcessManager {
 			return process;
 		}
 
+		try{
+			Path path = Paths.get(getCommandlineFile(pid));
+			FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
+			UserPrincipal owner = ownerAttributeView.getOwner();
+			process.setUser(owner.getName());
+		}catch (IOException e){
+		}
+
 		try {
-			process.setCmdline(FileUtils.readFileToString(new File(getCommandlineFile(pid))).replace("\u0000", " "));
+			process.setCommandline(FileUtils.readFileToString(new File(getCommandlineFile(pid))).replace("\u0000", " "));
 		} catch (IOException e) {
 		}
 
@@ -69,7 +80,7 @@ public class LinuxProcessManager implements ProcessManager {
 					  		environments.put(key, value);
 					  });
 
-			process.setEnv(environments);
+			process.setEnvironment(environments);
 		} catch (IOException e) {
 		}
 
@@ -144,6 +155,9 @@ public class LinuxProcessManager implements ProcessManager {
 		final String pid = extractPid(handle.getProcess());
 		if(pid != null) {
 			processHandles.put(pid, handle);
+
+			//save stderr/stdout before closing streams
+			executor.addStreamHandler(new StreamCloseListener(pid, handle));
 		}
 
 		return pid;
@@ -221,7 +235,10 @@ public class LinuxProcessManager implements ProcessManager {
 	private void save(String pid, Data data, boolean stdout) throws IOException {
 		File file = stdout ? getStdOutFile(pid) : getStdErrFile(pid);
 
-		if(file.exists()) file.createNewFile();
+		if(file.exists()) {
+			file.createNewFile();
+			file.deleteOnExit();
+		}
 
 		FileOutputStream fos = new FileOutputStream(file, true);
 
@@ -240,6 +257,7 @@ public class LinuxProcessManager implements ProcessManager {
 	private Data readFrom(String pid, boolean stdout) throws IOException {
 		final ProcessHandle handle = processHandles.get(pid);
 		BufferedInputStream reader = new BufferedInputStream(stdout ? handle.getStdout() : handle.getStderr());
+
 		if(reader.available() <= 0) {
 			return new Data(new byte[]{}, 0);
 		}
@@ -302,5 +320,51 @@ public class LinuxProcessManager implements ProcessManager {
 
 	private String getEnvironmentFile(String pid) {
 		return getProcessDir(pid) + "environ";
+	}
+
+	private class StreamCloseListener implements ExecuteStreamHandler {
+		private final String pid;
+		private final ProcessHandle handle;
+
+		public StreamCloseListener(String pid, ProcessHandle handle) {
+			this.pid = pid;
+			this.handle = handle;
+		}
+
+		@Override
+		public void setProcessInputStream(OutputStream os) throws IOException {}
+
+		@Override
+		public void setProcessErrorStream(InputStream is) throws IOException {}
+
+		@Override
+		public void setProcessOutputStream(InputStream is) throws IOException {}
+
+		@Override
+		public void start() throws IOException {}
+
+		@Override
+		public void stop() throws IOException {
+			try {
+				backupStream(true);
+			}catch (IOException e) {}
+
+			try {
+				backupStream(false);
+			}catch (IOException e) {}
+		}
+
+		private void backupStream(boolean stdout) throws IOException {
+			InputStream stream = stdout ? handle.getStdout() : handle.getStderr();
+
+			while(stream.available() > 0) {
+				byte[] content = new byte[8192];
+				int read = stream.read(content);
+				Data data = new Data(content, read);
+
+				save(pid, data, stdout);
+			}
+		}
+
 	}
 }

@@ -11,6 +11,7 @@ import java.util.Map;
 public class CommandExecutor {
 	private final DefaultExecutor executor;
 	private final ProcessInterceptor processInterceptor;
+	private final CompositeStreamHandler streamHandler;
 	private final StreamInterceptor streamInterceptor;
 
 	public CommandExecutor(String workdir) {
@@ -24,7 +25,8 @@ public class CommandExecutor {
 		this.executor.setWatchdog(processInterceptor);
 
 		this.streamInterceptor = new StreamInterceptor();
-		this.executor.setStreamHandler(streamInterceptor);
+		this.streamHandler = new CompositeStreamHandler(streamInterceptor);
+		this.executor.setStreamHandler(streamHandler);
 	}
 
 	public ProcessHandle execute(CommandLine command, ExecuteResultHandler handler) throws IOException {
@@ -37,6 +39,10 @@ public class CommandExecutor {
 		executor.execute(command, environment, handler);
 
 		return buildProcessHandle();
+	}
+
+	public void addStreamHandler(ExecuteStreamHandler streamHandler){
+		this.streamHandler.addHandler(streamHandler);
 	}
 
 	private ProcessHandle buildProcessHandle() {
