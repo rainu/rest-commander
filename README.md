@@ -1,8 +1,17 @@
 # rest-commander
 A Rest-Application which can execute and manage processes.
 
-**List Process**
-----
+# API
+1. [List Process](#list-process)
+2. [Start Process](#start-process)
+3. [Start Process (as admin)](#start-process-as-admin)
+4. [Signal](#signal)
+5. [Input](#input)
+6. [Status](#status)
+7. [Output](#output)
+
+## List Process
+
 _Gets a list of all running processes._
 
 * **URL**
@@ -75,8 +84,8 @@ _Gets a list of all running processes._
   curl -H 'x-auth-token: <token>' http://localhost:8080/process
   ```
 
-**Start Process**
-----
+## Start Process
+
   _Starts a process. The owner of the process is the user which starts it._
 
 * **URL**
@@ -149,8 +158,8 @@ _Gets a list of all running processes._
       --data '{"environment":{ "env1":"value1" }, "workDirectory": "/tmp/", "command":"/bin/sh", "arguments":[ "-c", "date" ]}'
     ```
     
-**Start Process (as admin)**
-----
+## Start Process (as admin)
+
   _Starts a process. The owner of the process is the user which starts the server application._
   
 * **URL**
@@ -223,8 +232,8 @@ _Gets a list of all running processes._
       --data '{"environment":{ "env1":"value1" }, "workDirectory": "/tmp/", "command":"/bin/sh", "arguments":[ "-c", "date" ]}'
     ```
 
-**Signal**
-----
+## Signal
+
  _Send signal to running process. Only the user which created the process can send a signal to them. Expected
  a user which is an admin! If you sends a signal to a foreign process, you will get a 404 (ProcessNotFound)._
 
@@ -298,8 +307,8 @@ _Gets a list of all running processes._
   
   _You can use the numeric signal value as well as the name of the signal._
   
-**Input**
-----
+## Input
+
   _Send a input string to a running process. Only the user which created the process can send input to them. Expected
   a user which is an admin! If you sends input to a foreign process, you will get a 404 (ProcessNotFound)._
 
@@ -386,8 +395,8 @@ _Gets a list of all running processes._
   _If you are using the "input" special characters will be interpreting. If you are using the "raw" you have to send base64 encoded string.
   In raw-mode no characters will be interpreting._
   
-**Status**
-----
+## Status
+
   _Gets process information._
   
 * **URL**
@@ -459,8 +468,8 @@ _Gets a list of all running processes._
   curl -H 'x-auth-token: <token>' http://localhost:8080/process/1
   ```
 
-**Output**
-----
+## Output
+
   _Read the output/error from a process which where started before. Only the user which created the process can read the data. 
   Expected a user which is an admin! If you try to read a foreign process - or an process which where not started from
   the server-application, you will get a 404 (ProcessNotFound)._
