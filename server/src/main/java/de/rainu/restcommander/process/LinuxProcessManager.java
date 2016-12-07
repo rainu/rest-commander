@@ -97,6 +97,9 @@ public class LinuxProcessManager implements ProcessManager {
 		checkPid(pid);
 
 		final Process process = toProcess(pid);
+
+		checkProcess(process);
+
 		if(!process.isRunning() && processHandles.containsKey(pid)) {
 			// i can only know the return code if i starts the process!
 			process.setReturnCode(processHandles.get(pid).getProcess().exitValue());
@@ -171,6 +174,7 @@ public class LinuxProcessManager implements ProcessManager {
 	@Override
 	public int sendSignal(String pid, String signal) throws IOException, ProcessNotFoundException {
 		checkPid(pid);
+		checkProcess(toProcess(pid));
 
 		CommandLine killCommand = new CommandLine("kill");
 
@@ -192,6 +196,7 @@ public class LinuxProcessManager implements ProcessManager {
 	@Override
 	public void sendInput(String pid, byte[] rawInput) throws IOException, ProcessNotFoundException {
 		checkPid(pid);
+		checkProcess(toProcess(pid));
 
 		final ProcessHandle handle = processHandles.get(pid);
 		if(handle == null){
@@ -214,6 +219,7 @@ public class LinuxProcessManager implements ProcessManager {
 
 	private Data read(String pid, Long startRange, boolean stdout) throws IOException, ProcessNotFoundException {
 		checkPid(pid);
+		checkProcess(toProcess(pid));
 
 		if(!processHandles.containsKey(pid)) {
 			// i can only read input from process which i started
@@ -304,6 +310,16 @@ public class LinuxProcessManager implements ProcessManager {
 	private void checkPid(String pid) throws ProcessNotFoundException {
 		if(pid == null || !PID_PATTERN.matcher(pid).matches()) {
 			throw new ProcessNotFoundException(pid);
+		}
+	}
+
+	private void checkProcess(Process process) throws ProcessNotFoundException {
+		if(processHandles.containsKey(process.getId())){
+			return;
+		}
+
+		if(!process.isRunning()) {
+			throw new ProcessNotFoundException(process.getId());
 		}
 	}
 

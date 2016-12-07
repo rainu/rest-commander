@@ -1,6 +1,5 @@
 package de.rainu.restcommander.process;
 
-import de.rainu.restcommander.IntegrationTest;
 import de.rainu.restcommander.model.Process;
 import org.apache.commons.exec.CommandLine;
 import org.junit.Before;
@@ -91,6 +90,13 @@ public class LinuxProcessManagerTest {
 		assertEquals(System.getProperty("user.name"), result.getUser());
 	}
 
+	@Test(expected = ProcessNotFoundException.class)
+	public void getProcess_NoProcessFound() throws ProcessNotFoundException {
+		assumeLinux();
+
+		toTest.getProcess(String.valueOf(Long.MAX_VALUE));
+	}
+
 	@Test
 	public void startAndReadProcess() throws IOException, ProcessNotFoundException, InterruptedException {
 		assumeLinux();
@@ -173,6 +179,16 @@ public class LinuxProcessManagerTest {
 		assertNotEquals(new Integer(0), new Integer(toTest.sendSignal(pid, "TERM")));
 	}
 
+	@Test(expected = ProcessNotFoundException.class)
+	public void sendSignal_NoProcessFound() throws ProcessNotFoundException, IOException {
+		toTest.sendSignal(String.valueOf(Long.MAX_VALUE), "9");
+	}
+
+	@Test(expected = ProcessNotFoundException.class)
+	public void input_NoProcessFound() throws ProcessNotFoundException, IOException {
+		toTest.sendInput(String.valueOf(Long.MAX_VALUE), new byte[]{});
+	}
+
 	@Test
 	public void readAndWrite_stdout() throws IOException, ProcessNotFoundException, InterruptedException {
 		assumeLinux();
@@ -189,6 +205,11 @@ public class LinuxProcessManagerTest {
 		assertTrue(output.contains("HelloWorld!"));
 	}
 
+	@Test(expected = ProcessNotFoundException.class)
+	public void readOutput_NoProcessFound() throws ProcessNotFoundException, IOException {
+		toTest.readOutput(String.valueOf(Long.MAX_VALUE), 0L);
+	}
+
 	@Test
 	public void readAndWrite_stderr() throws IOException, ProcessNotFoundException, InterruptedException {
 		assumeLinux();
@@ -203,5 +224,10 @@ public class LinuxProcessManagerTest {
 
 		error = new String(toTest.readError(pid, 0L).content);
 		assertTrue(error.contains("HelloWorld!"));
+	}
+
+	@Test(expected = ProcessNotFoundException.class)
+	public void readError_NoProcessFound() throws ProcessNotFoundException, IOException {
+		toTest.readError(String.valueOf(Long.MAX_VALUE), 0L);
 	}
 }
