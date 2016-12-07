@@ -177,7 +177,11 @@ public class LinuxProcessManager implements ProcessManager {
 		}
 		killCommand.addArgument(pid);
 
-		return new DefaultExecutor().execute(killCommand);
+		try {
+			return new DefaultExecutor().execute(killCommand);
+		}catch(ExecuteException e) {
+			return e.getExitValue();
+		}
 	}
 
 	@Override
@@ -217,7 +221,9 @@ public class LinuxProcessManager implements ProcessManager {
 		}
 
 		final Data data = readFrom(pid, stdout);
-		save(pid, data, stdout);
+		if(data.read > 0) {
+			save(pid, data, stdout);
+		}
 
 		return data;
 	}
@@ -258,7 +264,16 @@ public class LinuxProcessManager implements ProcessManager {
 		final ProcessHandle handle = processHandles.get(pid);
 		BufferedInputStream reader = new BufferedInputStream(stdout ? handle.getStdout() : handle.getStderr());
 
-		if(reader.available() <= 0) {
+		boolean dataAvailable = true;
+		try {
+			if (reader.available() <= 0) {
+				dataAvailable = false;
+			}
+		}catch (IOException e) {
+			dataAvailable = false;
+		}
+
+		if(!dataAvailable) {
 			return new Data(new byte[]{}, 0);
 		}
 
@@ -275,7 +290,7 @@ public class LinuxProcessManager implements ProcessManager {
 		try {
 			final int read = is.read(content);
 
-			return new Data(content, read);
+			return new Data(content, read <= 0 ? 0 : read);
 		}finally {
 			is.close();
 		}

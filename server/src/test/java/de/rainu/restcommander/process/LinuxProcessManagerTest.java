@@ -1,5 +1,6 @@
 package de.rainu.restcommander.process;
 
+import de.rainu.restcommander.IntegrationTest;
 import de.rainu.restcommander.model.Process;
 import org.apache.commons.exec.CommandLine;
 import org.junit.Before;
@@ -141,10 +142,10 @@ public class LinuxProcessManagerTest {
 	public void sendSignal_bySignalInt() throws IOException, ProcessNotFoundException {
 		assumeLinux();
 
-		final String pid = toTest.startProcess("top", null, null, null);
+		final String pid = toTest.startProcess("sh", null, null, null);
 		assertTrue(toTest.getProcess(pid).isRunning());
 
-		toTest.sendSignal(pid, "9");
+		assertEquals(new Integer(0), new Integer(toTest.sendSignal(pid, "9")));
 		assertFalse(toTest.getProcess(pid).isRunning());
 	}
 
@@ -152,11 +153,22 @@ public class LinuxProcessManagerTest {
 	public void sendSignal_bySignlaName() throws IOException, ProcessNotFoundException {
 		assumeLinux();
 
-		final String pid = toTest.startProcess("top", null, null, null);
+		final String pid = toTest.startProcess("sh", null, null, null);
 		assertTrue(toTest.getProcess(pid).isRunning());
 
-		toTest.sendSignal(pid, "TERM");
+		assertEquals(new Integer(0), new Integer(toTest.sendSignal(pid, "TERM")));
 		assertFalse(toTest.getProcess(pid).isRunning());
+	}
+
+	@Test
+	public void sendSignal_alreadyKilledProcess() throws IOException, ProcessNotFoundException, InterruptedException {
+		assumeLinux();
+
+		final String pid = toTest.startProcess("echo", null, null, null);
+		Thread.sleep(500);
+		assertFalse(toTest.getProcess(pid).isRunning());
+
+		assertNotEquals(new Integer(0), new Integer(toTest.sendSignal(pid, "TERM")));
 	}
 
 	@Test
