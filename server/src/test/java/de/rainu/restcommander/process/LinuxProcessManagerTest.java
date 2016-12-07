@@ -53,6 +53,7 @@ public class LinuxProcessManagerTest {
 		assertEquals(1, processList.size());
 		assertEquals(System.getProperty("user.name"), processList.get(0).getUser());
 		assertEquals("1312", processList.get(0).getId());
+		assertEquals("0", processList.get(0).getParent());
 		assertEquals("/sbin/init", processList.get(0).getCommandline());
 		assertEquals(2, processList.get(0).getEnvironment().size());
 		assertEquals("VALUE1", processList.get(0).getEnvironment().get("ENV_1"));
@@ -83,6 +84,7 @@ public class LinuxProcessManagerTest {
 		Process result = toTest.getProcess(getOwnPID());
 
 		assertEquals(getOwnPID(), result.getId());
+		assertNotEquals(getOwnPID(), result.getParent());
 		assertTrue(result.getCommandline().contains("java "));
 		assertNull(result.getReturnCode());
 		assertEquals(System.getenv(), result.getEnvironment());

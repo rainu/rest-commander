@@ -4,6 +4,7 @@ import java.util.Map;
 
 public class Process {
 	private String id;
+	private String parent;
 	private String commandline;
 	private String user;
 	private Map<String, String> environment;
@@ -16,6 +17,14 @@ public class Process {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+
+	public String getParent() {
+		return parent;
+	}
+
+	public void setParent(String parent) {
+		this.parent = parent;
 	}
 
 	public String getCommandline() {

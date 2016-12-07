@@ -55,6 +55,11 @@ public class LinuxProcessManager implements ProcessManager {
 		}
 
 		try{
+			process.setParent(FileUtils.readFileToString(new File(getStatFile(pid))).split(" ")[3]);
+		}catch (IOException e){
+		}
+
+		try{
 			Path path = Paths.get(getCommandlineFile(pid));
 			FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
 			UserPrincipal owner = ownerAttributeView.getOwner();
@@ -331,6 +336,10 @@ public class LinuxProcessManager implements ProcessManager {
 
 	private String getCommandlineFile(String pid) {
 		return getProcessDir(pid) + "cmdline";
+	}
+
+	private String getStatFile(String pid) {
+		return getProcessDir(pid) + "stat";
 	}
 
 	private String getEnvironmentFile(String pid) {

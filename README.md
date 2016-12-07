@@ -135,6 +135,7 @@ _Gets a list of all running processes._
     ```json
     [{ 
       "id": "1",
+      "parent": "1",
       "commandline": "/bin/init",
       "user": "root",
       "environment": {
@@ -145,6 +146,7 @@ _Gets a list of all running processes._
       "returnCode": null
     },{ 
       "id": "2",
+      "parent": "1",
       "commandline": "/bin/sh",
       "user": "root",
       "environment": {
@@ -522,6 +524,7 @@ _Gets a list of all running processes._
     ```json
     { 
       "id": "1",
+      "parent": "1",
       "commandline": "/bin/init",
       "user": "root",
       "environment": {
