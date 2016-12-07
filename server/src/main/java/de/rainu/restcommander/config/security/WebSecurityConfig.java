@@ -48,6 +48,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		http
 		  .addFilterBefore(createCustomFilter(), AnonymousAuthenticationFilter.class)
+		  .sessionManagement().disable()
 		  .csrf().disable();
 	}
 
