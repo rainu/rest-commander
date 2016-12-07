@@ -162,8 +162,12 @@ public class ProcessController {
 			return;	//the admin can control all processes!
 		}
 
-		if(!processManager.getProcess(pid).getUser().equals(token.getUser().getUsername())){
-			throw new ProcessNotFoundException(pid);
+		final Process process = processManager.getProcess(pid);
+		if(!process.getUser().equals(token.getUser().getUsername())){
+			//the su command always run as root but the underlying process runs as the user
+			if(!process.getCommandline().startsWith("su " + token.getUser().getUsername() + " ")) {
+				throw new ProcessNotFoundException(pid);
+			}
 		}
 	}
 

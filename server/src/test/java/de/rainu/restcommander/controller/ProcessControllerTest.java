@@ -45,11 +45,24 @@ public class ProcessControllerTest {
 		toTest.checkProcessOwner("<pid>", token);
 	}
 
+	@Test
+	public void checkProcessOwner_isUserSu() throws ProcessNotFoundException {
+		AuthenticationToken token = new AuthenticationToken("<token>", new User("user", "<password>", UserRole.USER));
+		Process process = new Process();
+		process.setUser("root");
+		process.setCommandline("su user top");
+
+		doReturn(process).when(toTest.processManager).getProcess(anyString());
+
+		toTest.checkProcessOwner("<pid>", token);
+	}
+
 	@Test(expected = ProcessNotFoundException.class)
 	public void checkProcessOwner_wrongUser() throws ProcessNotFoundException {
 		AuthenticationToken token = new AuthenticationToken("<token>", new User("user", "<password>", UserRole.USER));
 		Process process = new Process();
 		process.setUser("root");
+		process.setCommandline("top");
 
 		doReturn(process).when(toTest.processManager).getProcess(anyString());
 
