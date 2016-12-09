@@ -2,34 +2,20 @@ package controller
 
 import (
 	"github.com/gorilla/mux"
-	"net/http"
+	"rest-commander/store"
 )
 
 type ProcessRoute struct {
-	HandleAccessDenied http.HandlerFunc
-	HandleListProcess http.HandlerFunc
-	HandleStartProcess http.HandlerFunc
-	HandleStartProcessAdmin http.HandlerFunc
-	HandleProcessSignal http.HandlerFunc
-	HandleProcessInput http.HandlerFunc
-	HandleProcessOutput http.HandlerFunc
-	HandleProcessStatus http.HandlerFunc
+	userStore store.UserStore
 }
 
-func ApplyProcessRouter(router *mux.Router) {
-	applyProcessRouter(router, ProcessRoute{
-		HandleAccessDenied: HandleAccessDenied,
-		HandleListProcess: handleListProcess,
-		HandleStartProcess: handleStartProcess,
-		HandleStartProcessAdmin: handleStartProcessAdmin,
-		HandleProcessSignal: handleProcessSignal,
-		HandleProcessInput: handleProcessInput,
-		HandleProcessOutput: handleProcessOutput,
-		HandleProcessStatus: handleProcessStatus,
-	})
+func ApplyProcessRouter(router *mux.Router, userStore store.UserStore) {
+	applyProcessRouter(router, &ProcessRoute{
+		userStore: userStore,
+	}, &AuthenticationRoute{})
 }
 
-func applyProcessRouter(router *mux.Router, route ProcessRoute) {
+func applyProcessRouter(router *mux.Router, controller ProcessController, adController AccessDeniedController) {
 	subRouter := router.
 		PathPrefix("/process").
 		HeadersRegexp("x-auth-token", ".*").
@@ -39,46 +25,46 @@ func applyProcessRouter(router *mux.Router, route ProcessRoute) {
 		Path("/process").
 		Methods("GET").
 		HeadersRegexp("x-auth-token", ".*").
-		HandlerFunc(route.HandleListProcess)
+		HandlerFunc(controller.HandleListProcess)
 
 	router.
 		Path("/process").
 		Methods("POST").
 		HeadersRegexp("x-auth-token", ".*").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(route.HandleStartProcess)
+		HandlerFunc(controller.HandleStartProcess)
 
 	router.
 		PathPrefix("/process").
-		HandlerFunc(route.HandleAccessDenied)
+		HandlerFunc(adController.HandleAccessDenied)
 
 	subRouter.
 		Path("/admin").
 		Methods("POST").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(route.HandleStartProcessAdmin)
+		HandlerFunc(controller.HandleStartProcessAdmin)
 
 	subRouter.
 		Path("/{pid}/{signal}").
 		Methods("POST").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(route.HandleProcessSignal)
+		HandlerFunc(controller.HandleProcessSignal)
 
 	subRouter.
 		Path("/{pid}").
 		Methods("POST").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(route.HandleProcessInput)
+		HandlerFunc(controller.HandleProcessInput)
 
 	subRouter.
 		Path("/{pid}").
 		Methods("GET").
-		HandlerFunc(route.HandleProcessStatus)
+		HandlerFunc(controller.HandleProcessStatus)
 
 	subRouter.
 		Path("/{pid}/{stream}").
 		Headers("Accept", "application/octet-stream").
 		HeadersRegexp("Range", "([0-9]+)-").
 		Methods("GET").
-		HandlerFunc(route.HandleProcessOutput)
+		HandlerFunc(controller.HandleProcessOutput)
 }

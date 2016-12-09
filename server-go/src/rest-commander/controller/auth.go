@@ -2,32 +2,30 @@ package controller
 
 import (
 	"github.com/gorilla/mux"
-	"net/http"
+	"rest-commander/store"
 )
 
 type AuthenticationRoute struct {
-	HandleLogin http.HandlerFunc
-	HandleLogout http.HandlerFunc
+	userStore store.UserStore
 }
 
-func ApplyAuthenticationRouter(router *mux.Router) {
-	applyAuthenticationRouter(router, AuthenticationRoute{
-		HandleLogin: handleLogin,
-		HandleLogout: handleLogout,
+func ApplyAuthenticationRouter(router *mux.Router, userStore store.UserStore) {
+	applyAuthenticationRouter(router, &AuthenticationRoute{
+		userStore: userStore,
 	})
 }
 
-func applyAuthenticationRouter(router *mux.Router, route AuthenticationRoute) {
+func applyAuthenticationRouter(router *mux.Router, controller AuthenticationController) {
 	subRouter := router.PathPrefix("/auth").Subrouter()
 
 	subRouter.
 		Methods("POST").
 		Path("/login").
-		HandlerFunc(route.HandleLogin)
+		HandlerFunc(controller.HandleLogin)
 
 	subRouter.
 		Methods("POST").
 		HeadersRegexp("x-auth-token", ".*").
 		Path("/logout").
-		HandlerFunc(route.HandleLogout)
+		HandlerFunc(controller.HandleLogout)
 }

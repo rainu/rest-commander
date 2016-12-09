@@ -5,12 +5,15 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"rest-commander/controller"
+	"rest-commander/store"
 )
 
 func main() {
 	router := mux.NewRouter()
-	controller.ApplyAuthenticationRouter(router)
-	controller.ApplyProcessRouter(router)
+	userStore := store.NewUserStore()
+
+	controller.ApplyAuthenticationRouter(router, userStore)
+	controller.ApplyProcessRouter(router, userStore)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
