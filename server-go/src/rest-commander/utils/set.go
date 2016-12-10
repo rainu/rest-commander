@@ -23,16 +23,20 @@ func (ss *StringSet) Contains(value string) bool {
 	return ok
 }
 
-func (ss *StringSet) Add(values...string) {
+func (ss *StringSet) Add(values...string) *StringSet {
 	for _, v := range values {
 		ss.data[v] = true
 	}
+
+	return ss
 }
 
-func (ss *StringSet) Remove(values...string) {
+func (ss *StringSet) Remove(values...string) *StringSet {
 	for _, v := range values {
 		delete(ss.data, v)
 	}
+
+	return ss
 }
 
 func (ss *StringSet) Iter() []string {

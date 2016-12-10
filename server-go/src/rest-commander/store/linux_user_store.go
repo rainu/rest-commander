@@ -1,15 +1,17 @@
 package store
 
 import (
-	"os"
+	osUser "os/user"
 	"bufio"
 	"strings"
 	"rest-commander/utils"
+	"os"
 )
 
 type LinuxUserStore struct {
 	systemUserReader
 	systemUsers map[string]*systemUser
+	allocatedUsers map[string]*User
 }
 
 type groupEntry struct {
@@ -36,6 +38,7 @@ const ETC_GROUP = "/etc/group"
 func NewLinuxUserStore() *LinuxUserStore {
 	return &LinuxUserStore{
 		systemUserReader: &defaultSystemUserReader{},
+		allocatedUsers: make(map[string]*User),
 	}
 }
 
@@ -44,12 +47,23 @@ func (l *LinuxUserStore) Get(username string) *User {
 		return nil
 	}
 
-	su := l.getSystemUser()[username]
+	if _, ok := l.allocatedUsers[username]; !ok {
+		su := l.getSystemUser()[username]
 
-	return &User{
-		Username: su.name,
-		Roles: utils.CopyStringSet(su.groups),
+		user := User{
+			Username: su.name,
+			Roles: utils.CopyStringSet(su.groups).Add(ROLE_USER),
+		}
+
+		osUser, _ := osUser.Current()
+		if osUser.Username == su.name || user.Roles.Contains("root") {
+			user.Roles.Add(ROLE_ADMIN)
+		}
+
+		l.allocatedUsers[username] = &user
 	}
+
+	return l.allocatedUsers[username]
 }
 
 func (l *LinuxUserStore) Contains(username string) bool {

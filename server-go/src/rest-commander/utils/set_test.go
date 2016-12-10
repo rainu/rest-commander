@@ -28,6 +28,13 @@ func Test_SetPreFill(t *testing.T) {
 	assert.True(t, set.Contains("test"))
 }
 
+func Test_SetChain(t *testing.T) {
+	set := NewStringSet("test").Add("test2")
+	assert.Equal(t, 2, len(set.Iter()))
+	assert.True(t, set.Contains("test"))
+	assert.True(t, set.Contains("test2"))
+}
+
 func Test_CopyStringSet(t *testing.T) {
 	set := NewStringSet("test")
 	set2 := CopyStringSet(set)

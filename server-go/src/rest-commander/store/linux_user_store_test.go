@@ -1,6 +1,7 @@
 package store
 
 import (
+	osUser "os/user"
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/golang/mock/gomock"
@@ -66,4 +67,69 @@ func Test_Contains(t *testing.T) {
 	}
 	assert.True(t, toTest.Contains("rainu"))
 	assert.False(t, toTest.Contains("root"))
+}
+
+func Test_Get(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	mockSystemUserReader := NewMocksystemUserReader(ctl)
+	mockSystemUserReader.EXPECT().readSystemUsers().Times(1).Return([]systemUser{
+		{name: "rainu", groups: utils.NewStringSet("user")},
+	})
+
+	toTest := LinuxUserStore{
+		systemUserReader: mockSystemUserReader,
+		allocatedUsers: make(map[string]*User),
+	}
+
+	user := toTest.Get("rainu")
+
+	assert.Equal(t, "rainu", user.Username)
+	assert.Empty(t, user.Password)
+	assert.Equal(t, utils.NewStringSet(ROLE_USER, "user"), user.Roles)
+}
+
+func Test_GetRootUser(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	mockSystemUserReader := NewMocksystemUserReader(ctl)
+	mockSystemUserReader.EXPECT().readSystemUsers().Times(1).Return([]systemUser{
+		{name: "rainu", groups: utils.NewStringSet("root")},
+	})
+
+	toTest := LinuxUserStore{
+		systemUserReader: mockSystemUserReader,
+		allocatedUsers: make(map[string]*User),
+	}
+
+	user := toTest.Get("rainu")
+
+	assert.Equal(t, "rainu", user.Username)
+	assert.Empty(t, user.Password)
+	assert.Equal(t, utils.NewStringSet(ROLE_USER, ROLE_ADMIN, "root"), user.Roles)
+}
+
+func Test_GetApplicationUser(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	appUser, _ := osUser.Current()
+
+	mockSystemUserReader := NewMocksystemUserReader(ctl)
+	mockSystemUserReader.EXPECT().readSystemUsers().Times(1).Return([]systemUser{
+		{name: appUser.Username, groups: utils.NewStringSet("user")},
+	})
+
+	toTest := LinuxUserStore{
+		systemUserReader: mockSystemUserReader,
+		allocatedUsers: make(map[string]*User),
+	}
+
+	user := toTest.Get(appUser.Username)
+
+	assert.Equal(t, appUser.Username, user.Username)
+	assert.Empty(t, user.Password)
+	assert.Equal(t, utils.NewStringSet(ROLE_USER, ROLE_ADMIN, "user"), user.Roles)
 }

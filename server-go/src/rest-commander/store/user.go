@@ -5,6 +5,9 @@ import (
 	"rest-commander/utils"
 )
 
+const ROLE_USER = "__USER__"
+const ROLE_ADMIN = "__ADMIN__"
+
 type User struct {
 	Username string
 	Password string
