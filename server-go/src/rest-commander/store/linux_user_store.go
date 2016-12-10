@@ -6,6 +6,7 @@ import (
 	"strings"
 	"rest-commander/utils"
 	"os"
+	"os/exec"
 )
 
 type LinuxUserStore struct {
@@ -73,7 +74,18 @@ func (l *LinuxUserStore) Contains(username string) bool {
 }
 
 func (l *LinuxUserStore) CheckPassword(username string, password string) bool {
-	return false
+	suCommand := exec.Command("su", username, "-c", "echo")
+
+	in, err := suCommand.StdinPipe()
+	if err != nil {
+		panic("Could not enter user password for checking user/password combination!")
+	}
+
+	suCommand.Start()
+	in.Write([]byte(password + "\n"))
+
+	suCommand.Wait()
+	return suCommand.ProcessState.Success()
 }
 
 func (l *LinuxUserStore) getSystemUser() map[string]*systemUser {
