@@ -1,10 +1,14 @@
 package store
 
-import "runtime"
+import (
+	"runtime"
+	"rest-commander/utils"
+)
 
 type User struct {
 	Username string
 	Password string
+	Roles *utils.StringSet
 }
 
 type UserStore interface {
@@ -16,7 +20,7 @@ type UserStore interface {
 func NewUserStore() UserStore {
 	switch runtime.GOOS {
 	case "linux":
-		return &LinuxUserStore{}
+		return NewLinuxUserStore()
 	default:
 		panic("The current os is not supported!")
 	}

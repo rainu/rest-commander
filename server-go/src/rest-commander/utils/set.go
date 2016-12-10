@@ -13,6 +13,10 @@ func NewStringSet(values...string) *StringSet {
 	return &me
 }
 
+func CopyStringSet(set *StringSet) *StringSet {
+	return NewStringSet(set.Iter()...)
+}
+
 func (ss *StringSet) Contains(value string) bool {
 	_, ok := ss.data[value]
 

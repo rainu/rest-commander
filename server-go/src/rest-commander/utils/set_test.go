@@ -27,3 +27,22 @@ func Test_SetPreFill(t *testing.T) {
 	assert.Equal(t, 1, len(set.Iter()))
 	assert.True(t, set.Contains("test"))
 }
+
+func Test_CopyStringSet(t *testing.T) {
+	set := NewStringSet("test")
+	set2 := CopyStringSet(set)
+
+	assert.Equal(t, 1, len(set.Iter()))
+	assert.True(t, set.Contains("test"))
+
+	assert.Equal(t, 1, len(set2.Iter()))
+	assert.True(t, set2.Contains("test"))
+
+	set2.Remove("test")
+
+	assert.Equal(t, 1, len(set.Iter()))
+	assert.True(t, set.Contains("test"))
+
+	assert.Equal(t, 0, len(set2.Iter()))
+	assert.False(t, set2.Contains("test"))
+}
