@@ -3,15 +3,20 @@ package controller
 import (
 	"github.com/gorilla/mux"
 	"rest-commander/store"
+	"rest-commander/process"
 )
 
 type ProcessRoute struct {
 	userStore store.UserStore
+	tokenStore store.TokenStore
+	processManager process.ProcessManager
 }
 
-func ApplyProcessRouter(router *mux.Router, userStore store.UserStore) {
+func ApplyProcessRouter(router *mux.Router, userStore store.UserStore, tokenStore store.TokenStore, processManager process.ProcessManager) {
 	applyProcessRouter(router, &ProcessRoute{
 		userStore: userStore,
+		tokenStore: tokenStore,
+		processManager: processManager,
 	}, &AuthenticationRoute{})
 }
 

@@ -1,11 +1,11 @@
 package model
 
 type Process struct {
-	Id string
-	Parent string
-	Commandline string
-	User string
-	Environment map[string]string
-	Running bool
-	ReturnCode int
+	Id          string `json:"id"`
+	Parent      string `json:"parent"`
+	Commandline string `json:"commandline"`
+	User        string `json:"user"`
+	Environment map[string]string `json:"environment"`
+	Running     bool `json:"running"`
+	ReturnCode  int `json:"returnCode"`
 }

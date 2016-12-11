@@ -18,6 +18,10 @@ type AccessDeniedController interface {
 }
 
 func (t *AuthenticationRoute) HandleAccessDenied(w http.ResponseWriter, r *http.Request){
+	HandleAccessDenied(w, r)
+}
+
+func HandleAccessDenied(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusForbidden)
 }
 
