@@ -11,8 +11,9 @@ import (
 func main() {
 	router := mux.NewRouter()
 	userStore := store.NewUserStore()
+	tokenStore := store.NewAuthenticationTokenStore()
 
-	controller.ApplyAuthenticationRouter(router, userStore)
+	controller.ApplyAuthenticationRouter(router, userStore, tokenStore)
 	controller.ApplyProcessRouter(router, userStore)
 
 	log.Fatal(http.ListenAndServe(":8080", router))

@@ -33,3 +33,5 @@ generateVendorMock net/http Handler,ResponseWriter
 generateMock controller/auth_handler.go
 generateMock controller/process_handler.go
 generateMock store/linux_user_store.go
+generateMock store/user.go
+generateMock store/token.go

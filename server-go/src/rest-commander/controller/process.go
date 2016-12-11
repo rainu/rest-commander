@@ -18,19 +18,19 @@ func ApplyProcessRouter(router *mux.Router, userStore store.UserStore) {
 func applyProcessRouter(router *mux.Router, controller ProcessController, adController AccessDeniedController) {
 	subRouter := router.
 		PathPrefix("/process").
-		HeadersRegexp("x-auth-token", ".*").
+		HeadersRegexp(HEADER_TOKEN, ".*").
 		Subrouter()
 
 	router.
 		Path("/process").
 		Methods("GET").
-		HeadersRegexp("x-auth-token", ".*").
+		HeadersRegexp(HEADER_TOKEN, ".*").
 		HandlerFunc(controller.HandleListProcess)
 
 	router.
 		Path("/process").
 		Methods("POST").
-		HeadersRegexp("x-auth-token", ".*").
+		HeadersRegexp(HEADER_TOKEN, ".*").
 		Headers("Content-Type", "application/json").
 		HandlerFunc(controller.HandleStartProcess)
 

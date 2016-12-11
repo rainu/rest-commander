@@ -5,13 +5,17 @@ import (
 	"rest-commander/store"
 )
 
+const HEADER_TOKEN = "X-Auth-Token"
+
 type AuthenticationRoute struct {
 	userStore store.UserStore
+	tokenStore store.TokenStore
 }
 
-func ApplyAuthenticationRouter(router *mux.Router, userStore store.UserStore) {
+func ApplyAuthenticationRouter(router *mux.Router, userStore store.UserStore, tokenStore store.TokenStore) {
 	applyAuthenticationRouter(router, &AuthenticationRoute{
 		userStore: userStore,
+		tokenStore: tokenStore,
 	})
 }
 
@@ -25,7 +29,7 @@ func applyAuthenticationRouter(router *mux.Router, controller AuthenticationCont
 
 	subRouter.
 		Methods("POST").
-		HeadersRegexp("x-auth-token", ".*").
+		HeadersRegexp(HEADER_TOKEN, ".*").
 		Path("/logout").
 		HandlerFunc(controller.HandleLogout)
 }
