@@ -37,7 +37,7 @@ func (p *LinuxProcessManager) ListProcess() []*model.Process {
 		}
 	}
 
-	return nil
+	return result
 }
 
 func (p *LinuxProcessManager) toProcess(pid string) *model.Process {
