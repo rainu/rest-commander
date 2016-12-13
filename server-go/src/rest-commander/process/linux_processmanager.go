@@ -8,11 +8,14 @@ import (
 	"strings"
 	"syscall"
 	"os/user"
+	"os/exec"
 	"fmt"
+	"strconv"
 )
 
 type LinuxProcessManager struct {
 	procManager procFileManager
+	processHandles map[string]*exec.Cmd
 }
 
 var PID_PATTERN, _ = regexp.Compile("[0-9]+")
@@ -21,6 +24,7 @@ var SIGNAL_PATTERN, _ = regexp.Compile("[0-9]+")
 func NewLinuxProcessManager() *LinuxProcessManager {
 	return &LinuxProcessManager{
 		procManager: &defaultProcFileManager{},
+		processHandles: make(map[string]*exec.Cmd),
 	}
 }
 
@@ -48,7 +52,10 @@ func (p *LinuxProcessManager) toProcess(pid string) *model.Process {
 	processDir, err := os.Stat(p.procManager.getProcDir() + "/" + pid)
 	process.Running = err == nil
 
-	process.User = fmt.Sprint(processDir.Sys().(*syscall.Stat_t).Uid)
+	if process.Running {
+		process.User = fmt.Sprint(processDir.Sys().(*syscall.Stat_t).Uid)
+	}
+
 	uidUser, err := user.LookupId(process.User)
 	if err == nil {
 		process.User = uidUser.Username
@@ -80,7 +87,44 @@ func (p *LinuxProcessManager) toProcess(pid string) *model.Process {
 	return &process
 }
 
-func (p *LinuxProcessManager) Process(pid string) *model.Process {
+func (p *LinuxProcessManager) Process(pid string) (*model.Process, error) {
+	err := p.checkPid(pid)
+	if err != nil {
+		return nil, err
+	}
+
+	process := p.toProcess(pid)
+	err = p.checkProcess(process)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if ! process.Running && p.processHandles[pid] != nil {
+		// i can only know the return code if i starts the process!
+		process.ReturnCode = 1337	//TODO
+	}
+
+	return process, nil
+}
+
+func (p *LinuxProcessManager) checkPid(pid string) error {
+	if(pid == "" || !PID_PATTERN.MatchString(pid)) {
+		return &ProcessNotFoundError{pid,}
+	}
+
+	return nil
+}
+
+func (p *LinuxProcessManager) checkProcess(process *model.Process) error {
+	if _, exists := p.processHandles[process.Id]; exists {
+		return nil
+	}
+
+	if ! process.Running {
+		return &ProcessNotFoundError{Pid: process.Id}
+	}
+
 	return nil
 }
 
@@ -88,8 +132,29 @@ func (p *LinuxProcessManager) StartProcessAsUser(username string, password strin
 	return ""
 }
 
-func (p *LinuxProcessManager) StartProcess(command string, arguments []string, environment map[string]string, workingDirectory string) string {
-	return ""
+func (p *LinuxProcessManager) StartProcess(command string, arguments []string, environment map[string]string, workingDirectory string) (string, error) {
+	cmd := exec.Command(command, arguments...)
+
+	if environment != nil && len(environment) > 0 {
+		rawEnv := make([]string, len(environment), len(environment))
+		i := 0
+		for key, value := range environment {
+			rawEnv[i] = key + "=" + value
+			i++
+		}
+
+		cmd.Env = rawEnv
+	}
+	cmd.Dir = workingDirectory
+	err := cmd.Start()
+	if err != nil {
+		return "", err
+	}
+
+	pid := strconv.Itoa(cmd.Process.Pid)
+	p.processHandles[pid] = cmd
+
+	return pid, nil
 }
 
 func (p *LinuxProcessManager) SendSignal(pid string, signal string) int {

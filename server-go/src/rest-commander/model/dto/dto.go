@@ -12,3 +12,15 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token string `json:"token"`
 }
+
+type ProcessRequest struct {
+	Command     string `json:"command"`
+	Arguments   []string `json:"arguments"`
+	Environment map[string]string `json:"environment"`
+	WorkingDir  string `json:"workDirectory"`
+}
+
+type ProcessCreateResponse struct {
+	Pid     string `json:"pid"`
+	Created bool `json:"created"`
+}
