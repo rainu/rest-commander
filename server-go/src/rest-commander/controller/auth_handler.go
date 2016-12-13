@@ -56,6 +56,8 @@ func (t *AuthenticationRoute) HandleLogin(w http.ResponseWriter, r *http.Request
 	token := store.NewAuthenticationToken(auth.Username)
 
 	t.tokenStore.Add(token)
+	t.userStore.Get(auth.Username).Password = auth.Password
+
 	resp := dto.LoginResponse{
 		Token: token.Token,
 	}
