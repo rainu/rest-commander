@@ -11,11 +11,22 @@ import (
 	"os/exec"
 	"fmt"
 	"strconv"
+	"errors"
+	"bytes"
+	"io"
 )
 
 type LinuxProcessManager struct {
 	procManager procFileManager
-	processHandles map[string]*exec.Cmd
+	processHandles map[string]*processHandle
+}
+
+type processHandle struct {
+	pid string
+	command *exec.Cmd
+	stdIn io.WriteCloser
+	stdOut io.ReadCloser
+	stdErr io.ReadCloser
 }
 
 var PID_PATTERN, _ = regexp.Compile("[0-9]+")
@@ -24,7 +35,7 @@ var SIGNAL_PATTERN, _ = regexp.Compile("[0-9]+")
 func NewLinuxProcessManager() *LinuxProcessManager {
 	return &LinuxProcessManager{
 		procManager: &defaultProcFileManager{},
-		processHandles: make(map[string]*exec.Cmd),
+		processHandles: make(map[string]*processHandle),
 	}
 }
 
@@ -102,7 +113,19 @@ func (p *LinuxProcessManager) Process(pid string) (*model.Process, error) {
 
 	if ! process.Running && p.processHandles[pid] != nil {
 		// i can only know the return code if i starts the process!
-		process.ReturnCode = 1337	//TODO
+		if p.processHandles[pid].command.ProcessState.Success() {
+			process.ReturnCode = 0
+		} else {
+			// The program has exited with an exit code != 0
+
+			// This works on both Unix and Windows. Although package
+			// syscall is generally platform dependent, WaitStatus is
+			// defined for both Unix and Windows and in both cases has
+			// an ExitStatus() method with the same signature.
+			if status, ok := p.processHandles[pid].command.ProcessState.Sys().(syscall.WaitStatus); ok {
+				process.ReturnCode = status.ExitStatus()
+			}
+		}
 	}
 
 	return process, nil
@@ -128,12 +151,48 @@ func (p *LinuxProcessManager) checkProcess(process *model.Process) error {
 	return nil
 }
 
-func (p *LinuxProcessManager) StartProcessAsUser(username string, password string, command string, arguments []string, environment map[string]string, workingDirectory string) string {
-	return ""
+func (p *LinuxProcessManager) StartProcessAsUser(username string, password string, command string, arguments []string, environment map[string]string, workingDirectory string) (string , error){
+	if username == "" || password == "" {
+		return "", errors.New("Username and password are mandatory!")
+	}
+	var userCommand bytes.Buffer
+
+	userCommand.WriteString(command)
+	for _, arg := range arguments {
+		userCommand.WriteString(" " + arg)
+	}
+
+	suArgs := []string{
+		username, "-c", userCommand.String(),
+	}
+
+	handle, err := p.startProcess("su", suArgs, environment, workingDirectory)
+
+	if err != nil {
+		return "", err
+	}
+
+	_, err = handle.stdIn.Write([]byte(password + "\n"))
+	if err != nil {
+		return "", err
+	}
+
+	return handle.pid, nil
 }
 
 func (p *LinuxProcessManager) StartProcess(command string, arguments []string, environment map[string]string, workingDirectory string) (string, error) {
-	cmd := exec.Command(command, arguments...)
+	handle, err := p.startProcess(command, arguments, environment, workingDirectory)
+
+	if err != nil {
+		return "", err
+	}
+
+	return handle.pid, nil
+}
+
+func (p *LinuxProcessManager) startProcess(command string, arguments []string, environment map[string]string, workingDirectory string) (*processHandle, error) {
+	handle := &processHandle{}
+	handle.command = exec.Command(command, arguments...)
 
 	if environment != nil && len(environment) > 0 {
 		rawEnv := make([]string, len(environment), len(environment))
@@ -143,18 +202,33 @@ func (p *LinuxProcessManager) StartProcess(command string, arguments []string, e
 			i++
 		}
 
-		cmd.Env = rawEnv
+		handle.command.Env = rawEnv
 	}
-	cmd.Dir = workingDirectory
-	err := cmd.Start()
+	handle.command.Dir = workingDirectory
+
+	var err error
+	handle.stdIn, err = handle.command.StdinPipe()
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	handle.stdOut, err = handle.command.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	handle.stdErr, err = handle.command.StderrPipe()
+	if err != nil {
+		return nil, err
 	}
 
-	pid := strconv.Itoa(cmd.Process.Pid)
-	p.processHandles[pid] = cmd
+	err = handle.command.Start()
+	if err != nil {
+		return nil, err
+	}
 
-	return pid, nil
+	handle.pid = strconv.Itoa(handle.command.Process.Pid)
+	p.processHandles[handle.pid] = handle
+
+	return handle, nil
 }
 
 func (p *LinuxProcessManager) SendSignal(pid string, signal string) int {

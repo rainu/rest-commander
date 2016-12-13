@@ -60,10 +60,27 @@ func (t* ProcessRoute) HandleListProcess(w http.ResponseWriter, r *http.Request)
 }
 
 func (t* ProcessRoute) HandleStartProcess(w http.ResponseWriter, r *http.Request){
-	_, auth := t.checkAuthToken(w, r)
+	token, auth := t.checkAuthToken(w, r)
 	if ! auth {
 		return
 	}
+	user := t.userStore.Get(token.Username)
+
+	var processReq dto.ProcessRequest
+	json.NewDecoder(r.Body).Decode(&processReq)
+
+	pid, err := t.processManager.StartProcessAsUser(
+		user.Username,
+		user.Password,
+		processReq.Command,
+		processReq.Arguments,
+		processReq.Environment,
+		processReq.WorkingDir);
+
+	res := &dto.ProcessCreateResponse{
+		Pid: pid, Created: err == nil,
+	}
+	json.NewEncoder(w).Encode(res)
 }
 
 func (t* ProcessRoute) HandleStartProcessAdmin(w http.ResponseWriter, r *http.Request){
