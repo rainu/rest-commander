@@ -13,63 +13,61 @@ type ProcessRoute struct {
 }
 
 func ApplyProcessRouter(router *mux.Router, userStore store.UserStore, tokenStore store.TokenStore, processManager process.ProcessManager) {
+	authMiddleware := AuthenticationMiddleware{
+		tokenStore: tokenStore,
+	}
+
 	applyProcessRouter(router, &ProcessRoute{
 		userStore: userStore,
 		tokenStore: tokenStore,
 		processManager: processManager,
-	}, &AuthenticationRoute{})
+	},
+	authMiddleware.AuthenticationFuncMiddleware)
 }
 
-func applyProcessRouter(router *mux.Router, controller ProcessController, adController AccessDeniedController) {
+func applyProcessRouter(router *mux.Router, controller ProcessController, authMiddleware HandlerFuncMiddleware) {
 	subRouter := router.
 		PathPrefix("/process").
-		HeadersRegexp(HEADER_TOKEN, ".*").
 		Subrouter()
 
 	router.
 		Path("/process").
 		Methods("GET").
-		HeadersRegexp(HEADER_TOKEN, ".*").
-		HandlerFunc(controller.HandleListProcess)
+		Handler(authMiddleware(controller.HandleListProcess))
 
 	router.
 		Path("/process").
 		Methods("POST").
-		HeadersRegexp(HEADER_TOKEN, ".*").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(controller.HandleStartProcess)
-
-	router.
-		PathPrefix("/process").
-		HandlerFunc(adController.HandleAccessDenied)
+		Handler(authMiddleware(controller.HandleStartProcess))
 
 	subRouter.
 		Path("/admin").
 		Methods("POST").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(controller.HandleStartProcessAdmin)
+		Handler(authMiddleware(controller.HandleStartProcessAdmin))
 
 	subRouter.
 		Path("/{pid}/{signal}").
 		Methods("POST").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(controller.HandleProcessSignal)
+		Handler(authMiddleware(controller.HandleProcessSignal))
 
 	subRouter.
 		Path("/{pid}").
 		Methods("POST").
 		Headers("Content-Type", "application/json").
-		HandlerFunc(controller.HandleProcessInput)
+		Handler(authMiddleware(controller.HandleProcessInput))
 
 	subRouter.
 		Path("/{pid}").
 		Methods("GET").
-		HandlerFunc(controller.HandleProcessStatus)
+		Handler(authMiddleware(controller.HandleProcessStatus))
 
 	subRouter.
 		Path("/{pid}/{stream}").
 		Headers("Accept", "application/octet-stream").
 		HeadersRegexp("Range", "([0-9]+)-").
 		Methods("GET").
-		HandlerFunc(controller.HandleProcessOutput)
+		Handler(authMiddleware(controller.HandleProcessOutput))
 }

@@ -4,35 +4,12 @@ import (
 	"net/http"
 	"encoding/json"
 	"rest-commander/store"
-	"strings"
 	"rest-commander/model/dto"
 )
 
 type AuthenticationController interface {
 	HandleLogin(w http.ResponseWriter, r *http.Request)
 	HandleLogout(w http.ResponseWriter, r *http.Request)
-}
-
-type AccessDeniedController interface {
-	HandleAccessDenied(w http.ResponseWriter, r *http.Request)
-}
-
-func (t *AuthenticationRoute) HandleAccessDenied(w http.ResponseWriter, r *http.Request){
-	HandleAccessDenied(w, r)
-}
-
-func HandleAccessDenied(w http.ResponseWriter, r *http.Request){
-	w.WriteHeader(http.StatusForbidden)
-}
-
-func ExtractTokenFromRequest(r *http.Request) string{
-	for h, v := range r.Header {
-		if strings.EqualFold(h, HEADER_TOKEN) {
-			return v[0]
-		}
-	}
-
-	return ""
 }
 
 func (t *AuthenticationRoute) HandleLogin(w http.ResponseWriter, r *http.Request){
@@ -65,11 +42,6 @@ func (t *AuthenticationRoute) HandleLogin(w http.ResponseWriter, r *http.Request
 }
 
 func (t *AuthenticationRoute) HandleLogout(w http.ResponseWriter, r *http.Request){
-	token := ExtractTokenFromRequest(r)
-	if ! t.tokenStore.Contains(token) {
-		t.HandleAccessDenied(w, r)
-		return
-	}
-
-	t.tokenStore.Remove(token)
+	token := GetAuthtokenFromRequest(r)
+	t.tokenStore.Remove(token.Token)
 }

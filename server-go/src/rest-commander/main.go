@@ -18,5 +18,7 @@ func main() {
 	controller.ApplyAuthenticationRouter(router, userStore, tokenStore)
 	controller.ApplyProcessRouter(router, userStore, tokenStore, processManager)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	handler := controller.ContextMiddleware(router)
+
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }

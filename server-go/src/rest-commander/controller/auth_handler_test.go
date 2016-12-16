@@ -32,8 +32,10 @@ func Test_AuthLoginHandler_login(t *testing.T) {
 	data := dto.LoginRequest{
 		Username: "rainu", Password: "password",
 	}
+	user := store.User{}
 
 	mockUserStore.EXPECT().CheckPassword(data.Username, data.Password).Times(1).Return(true)
+	mockUserStore.EXPECT().Get("rainu").Times(1).Return(&user)
 	mockTokenStore.EXPECT().Add(gomock.Any()).Times(1)
 
 	jsonData, _ := json.Marshal(data)
@@ -46,6 +48,7 @@ func Test_AuthLoginHandler_login(t *testing.T) {
 	json.NewDecoder(recorder.Body).Decode(&result)
 
 	assert.NotEmpty(t, result.Token)
+	assert.Equal(t, data.Password, user.Password)
 }
 
 func Test_AuthLoginHandler_loginInvalid(t *testing.T) {
@@ -75,13 +78,16 @@ func Test_AuthLoginHandler_loginInvalid(t *testing.T) {
 func Test_AuthLoginHandler_logout(t *testing.T) {
 	router, _, mockTokenStore := setupAuthHandlerTest(t)
 
-	token := "t-o-k-e-n"
+	token := store.AuthenticationToken{
+		Token: "t-o-k-e-n", Username: "rainu",
+	}
 
-	mockTokenStore.EXPECT().Contains(token).Times(1).Return(true)
-	mockTokenStore.EXPECT().Remove(token).Times(1)
+	mockTokenStore.EXPECT().Contains(token.Token).Times(1).Return(true)
+	mockTokenStore.EXPECT().Remove(token.Token).Times(1)
+	mockTokenStore.EXPECT().Get(token.Token).Times(1).Return(&token)
 
 	req, _ := http.NewRequest("POST", "/auth/logout", nil)
-	req.Header.Set(HEADER_TOKEN, token)
+	req.Header.Set(HEADER_TOKEN, token.Token)
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
 
@@ -102,23 +108,4 @@ func Test_AuthLoginHandler_logoutInvalidToken(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 
 	assert.Equal(t, http.StatusForbidden, recorder.Code)
-}
-
-func Test_ExtractTokenFromRequest(t *testing.T) {
-	token := "t-o-k-e-n"
-
-	req, _ := http.NewRequest("POST", "/auth", nil)
-	req.Header.Set("x-auth-token", token)
-
-	assert.Equal(t, token, ExtractTokenFromRequest(req))
-
-	req, _ = http.NewRequest("POST", "/auth", nil)
-	req.Header.Set("x-AuTh-tOkEn", token)
-
-	assert.Equal(t, token, ExtractTokenFromRequest(req))
-
-	req, _ = http.NewRequest("POST", "/auth", nil)
-	req.Header.Set(HEADER_TOKEN, token)
-
-	assert.Equal(t, token, ExtractTokenFromRequest(req))
 }

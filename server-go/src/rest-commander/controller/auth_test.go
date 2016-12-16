@@ -8,20 +8,30 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func setupAuthTest(t *testing.T) (*mux.Router, *MockAuthenticationController) {
+func AuthenticationPassThroughMiddleware(delegate func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		delegate(w, r)
+	})
+}
+
+func AuthenticationDropMiddleware(delegate func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+}
+
+func setupAuthTest(t *testing.T, middleware HandlerFuncMiddleware) (*mux.Router, *MockAuthenticationController) {
 	ctl := gomock.NewController(t)
 	defer ctl.Finish()
 
 	router := mux.NewRouter()
 	mockController := NewMockAuthenticationController(ctl)
 
-	applyAuthenticationRouter(router, mockController)
+	applyAuthenticationRouter(router, mockController, middleware)
 
 	return router, mockController
 }
 
 func Test_AuthLogin_login(t *testing.T) {
-	router, controller := setupAuthTest(t)
+	router, controller := setupAuthTest(t, AuthenticationPassThroughMiddleware)
 	controller.EXPECT().HandleLogin(gomock.Any(), gomock.Any()).Times(1)
 
 	req, _ := http.NewRequest("POST", "/auth/login", nil)
@@ -29,7 +39,7 @@ func Test_AuthLogin_login(t *testing.T) {
 }
 
 func Test_AuthLogin_logout(t *testing.T) {
-	router, controller := setupAuthTest(t)
+	router, controller := setupAuthTest(t, AuthenticationPassThroughMiddleware)
 	controller.EXPECT().HandleLogout(gomock.Any(), gomock.Any()).Times(1)
 
 	req, _ := http.NewRequest("POST", "/auth/logout", nil)
@@ -38,7 +48,7 @@ func Test_AuthLogin_logout(t *testing.T) {
 }
 
 func Test_AuthLogin_logout_noToken(t *testing.T) {
-	router, controller := setupAuthTest(t)
+	router, controller := setupAuthTest(t, AuthenticationDropMiddleware)
 	controller.EXPECT().HandleLogout(gomock.Any(), gomock.Any()).Times(0)
 
 	req, _ := http.NewRequest("POST", "/auth/logout", nil)

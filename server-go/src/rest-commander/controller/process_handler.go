@@ -2,10 +2,7 @@ package controller
 
 import (
 	"net/http"
-	"rest-commander/store"
 	"encoding/json"
-	"os"
-	"os/user"
 	"github.com/gorilla/mux"
 	"rest-commander/model/dto"
 )
@@ -20,24 +17,6 @@ type ProcessController interface {
 	HandleProcessStatus(w http.ResponseWriter, r *http.Request)
 }
 
-func (t *ProcessRoute) checkAuthToken(w http.ResponseWriter, r *http.Request) (*store.AuthenticationToken, bool) {
-	if os.Getenv("debug_mode") == "true" {
-		currentUser, _ := user.Current()
-
-		return &store.AuthenticationToken{
-			Username: currentUser.Username,
-		}, true
-	}
-
-	token := ExtractTokenFromRequest(r)
-	if ! t.tokenStore.Contains(token) {
-		HandleAccessDenied(w, r)
-		return nil, false
-	}
-
-	return t.tokenStore.Get(token), true
-}
-
 func (t *ProcessRoute) checkProcess(w http.ResponseWriter, err error) (bool) {
 	if err != nil {
 		response := dto.ErrorResponse{Message: err.Error(), }
@@ -50,20 +29,12 @@ func (t *ProcessRoute) checkProcess(w http.ResponseWriter, err error) (bool) {
 }
 
 func (t* ProcessRoute) HandleListProcess(w http.ResponseWriter, r *http.Request){
-	_, auth := t.checkAuthToken(w, r)
-	if ! auth {
-		return
-	}
-
 	processList := t.processManager.ListProcess()
 	json.NewEncoder(w).Encode(processList)
 }
 
 func (t* ProcessRoute) HandleStartProcess(w http.ResponseWriter, r *http.Request){
-	token, auth := t.checkAuthToken(w, r)
-	if ! auth {
-		return
-	}
+	token := GetAuthtokenFromRequest(r)
 	user := t.userStore.Get(token.Username)
 
 	var processReq dto.ProcessRequest
@@ -84,11 +55,6 @@ func (t* ProcessRoute) HandleStartProcess(w http.ResponseWriter, r *http.Request
 }
 
 func (t* ProcessRoute) HandleStartProcessAdmin(w http.ResponseWriter, r *http.Request){
-	_, auth := t.checkAuthToken(w, r)
-	if ! auth {
-		return
-	}
-
 	var processReq dto.ProcessRequest
 	json.NewDecoder(r.Body).Decode(&processReq)
 
@@ -114,11 +80,6 @@ func (t* ProcessRoute) HandleProcessOutput(w http.ResponseWriter, r *http.Reques
 }
 
 func (t* ProcessRoute) HandleProcessStatus(w http.ResponseWriter, r *http.Request){
-	_, auth := t.checkAuthToken(w, r)
-	if ! auth {
-		return
-	}
-
 	pid := mux.Vars(r)["pid"]
 	process, err := t.processManager.Process(pid);
 	if t.checkProcess(w, err) {

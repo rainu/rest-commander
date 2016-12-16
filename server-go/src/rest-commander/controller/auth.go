@@ -13,13 +13,18 @@ type AuthenticationRoute struct {
 }
 
 func ApplyAuthenticationRouter(router *mux.Router, userStore store.UserStore, tokenStore store.TokenStore) {
+	authMiddleware := AuthenticationMiddleware{
+		tokenStore: tokenStore,
+	}
+
 	applyAuthenticationRouter(router, &AuthenticationRoute{
 		userStore: userStore,
 		tokenStore: tokenStore,
-	})
+	},
+	authMiddleware.AuthenticationFuncMiddleware)
 }
 
-func applyAuthenticationRouter(router *mux.Router, controller AuthenticationController) {
+func applyAuthenticationRouter(router *mux.Router, controller AuthenticationController, autMiddleware HandlerFuncMiddleware) {
 	subRouter := router.PathPrefix("/auth").Subrouter()
 
 	subRouter.
@@ -29,7 +34,6 @@ func applyAuthenticationRouter(router *mux.Router, controller AuthenticationCont
 
 	subRouter.
 		Methods("POST").
-		HeadersRegexp(HEADER_TOKEN, ".*").
 		Path("/logout").
-		HandlerFunc(controller.HandleLogout)
+		Handler(autMiddleware(controller.HandleLogout))
 }
