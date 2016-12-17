@@ -33,7 +33,7 @@ func (m *AuthenticationMiddleware) authenticationMiddleware(w http.ResponseWrite
 		return true
 	}
 
-	token := m.extractTokenFromRequest(r)
+	token := strings.TrimSpace(m.extractTokenFromRequest(r))
 
 	if ! m.tokenStore.Contains(token) {
 		w.WriteHeader(http.StatusForbidden)
@@ -46,7 +46,7 @@ func (m *AuthenticationMiddleware) authenticationMiddleware(w http.ResponseWrite
 
 func (m *AuthenticationMiddleware) extractTokenFromRequest(r *http.Request) string{
 	for h, v := range r.Header {
-		if strings.EqualFold(h, HEADER_TOKEN) {
+		if strings.ToLower(h) == strings.ToLower(HEADER_TOKEN) {
 			return v[0]
 		}
 	}
@@ -55,5 +55,10 @@ func (m *AuthenticationMiddleware) extractTokenFromRequest(r *http.Request) stri
 }
 
 func GetAuthtokenFromRequest(r *http.Request) *store.AuthenticationToken {
-	return context.Get(r, CONTEXT_AUTH_TOKEN).(*store.AuthenticationToken)
+	token := context.Get(r, CONTEXT_AUTH_TOKEN)
+	if token == nil {
+		return nil
+	}
+
+	return token.(*store.AuthenticationToken)
 }
