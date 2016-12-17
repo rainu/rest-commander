@@ -17,15 +17,10 @@ type ProcessController interface {
 	HandleProcessStatus(w http.ResponseWriter, r *http.Request)
 }
 
-func (t *ProcessRoute) checkProcess(w http.ResponseWriter, err error) (bool) {
+func (t *ProcessRoute) checkProcess(err error) {
 	if err != nil {
-		response := dto.ErrorResponse{Message: err.Error(), }
-
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
-		return false
+		panic(err)
 	}
-	return true
 }
 
 func (t* ProcessRoute) HandleListProcess(w http.ResponseWriter, r *http.Request){
@@ -82,7 +77,7 @@ func (t* ProcessRoute) HandleProcessOutput(w http.ResponseWriter, r *http.Reques
 func (t* ProcessRoute) HandleProcessStatus(w http.ResponseWriter, r *http.Request){
 	pid := mux.Vars(r)["pid"]
 	process, err := t.processManager.Process(pid);
-	if t.checkProcess(w, err) {
-		json.NewEncoder(w).Encode(process)
-	}
+	t.checkProcess(err)
+
+	json.NewEncoder(w).Encode(process)
 }
