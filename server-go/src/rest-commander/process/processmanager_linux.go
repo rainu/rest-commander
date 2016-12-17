@@ -25,8 +25,8 @@ type processHandle struct {
 	pid string
 	command *exec.Cmd
 	stdIn io.WriteCloser
-	stdOut io.ReadCloser
-	stdErr io.ReadCloser
+	stdOut *os.File
+	stdErr *os.File
 }
 
 var PID_PATTERN, _ = regexp.Compile("[0-9]+")
@@ -207,15 +207,12 @@ func (p *LinuxProcessManager) startProcess(command string, arguments []string, e
 	handle.command.Dir = workingDirectory
 
 	var err error
+	handle.stdOut, err = ioutil.TempFile(os.Getenv("working.temp"), "process_out_")
+	handle.stdErr, err = ioutil.TempFile(os.Getenv("working.temp"), "process_err_")
+	handle.command.Stdout = handle.stdOut
+	handle.command.Stderr = handle.stdErr
+
 	handle.stdIn, err = handle.command.StdinPipe()
-	if err != nil {
-		return nil, err
-	}
-	handle.stdOut, err = handle.command.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	handle.stdErr, err = handle.command.StderrPipe()
 	if err != nil {
 		return nil, err
 	}
@@ -285,12 +282,46 @@ func (p *LinuxProcessManager) SendInput(pid string, rawInput []byte) error {
 	return nil
 }
 
-func (p *LinuxProcessManager) ReadOutput(pid string, start int64) *Data {
-	return nil
+func (p *LinuxProcessManager) ReadOutput(pid string, start int64) (*Data, error) {
+	return p.read(pid, start, true)
 }
 
-func (p *LinuxProcessManager) ReadError(pid string, start int64) *Data {
-	return nil
+func (p *LinuxProcessManager) ReadError(pid string, start int64) (*Data, error) {
+	return p.read(pid, start, false)
+}
+
+func (p *LinuxProcessManager) read(pid string, offset int64, stdout bool) (*Data, error) {
+	err := p.checkPid(pid)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.checkProcess(p.toProcess(pid))
+	if err != nil {
+		return nil, err
+	}
+
+	ph := p.processHandles[pid]
+	if ph == nil {
+		return nil, &ProcessNotFoundError{ Pid: pid, }
+	}
+
+	var data *Data
+	if stdout {
+		data = p.readFrom(ph.stdOut, offset)
+	}else {
+		data = p.readFrom(ph.stdErr, offset)
+	}
+	return data, nil
+}
+
+func (p *LinuxProcessManager) readFrom(file *os.File, offset int64) *Data {
+	data := Data{
+		Content: make([]byte, 8192, 8192),
+	}
+
+	data.Read, _ = file.ReadAt(data.Content, offset)
+	return &data
 }
 
 type procFileManager interface {
@@ -301,8 +332,4 @@ type defaultProcFileManager struct {}
 
 func (pm *defaultProcFileManager) getProcDir() string {
 	return "/proc/"
-}
-
-func getProcessDir(procDir string, pid string) string {
-	return procDir + "/" + pid
 }

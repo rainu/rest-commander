@@ -11,8 +11,8 @@ type ProcessManager interface {
 	StartProcess(command string, arguments []string, environment map[string]string, workingDirectory string) (string, error)
 	SendSignal(pid string, signal string) (int, error)
 	SendInput(pid string, rawInput []byte) error
-	ReadOutput(pid string, start int64) *Data
-	ReadError(pid string, start int64) *Data
+	ReadOutput(pid string, start int64) (*Data, error)
+	ReadError(pid string, start int64) (*Data, error)
 }
 
 type Data struct {

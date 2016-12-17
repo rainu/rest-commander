@@ -9,6 +9,8 @@ import (
 	"strings"
 	"rest-commander/process"
 	"encoding/base64"
+	"regexp"
+	"strconv"
 )
 
 type ProcessController interface {
@@ -20,6 +22,8 @@ type ProcessController interface {
 	HandleProcessOutput(w http.ResponseWriter, r *http.Request)
 	HandleProcessStatus(w http.ResponseWriter, r *http.Request)
 }
+
+var RANGE_PATTERN, _ = regexp.Compile("([0-9]+)-")
 
 func (t *ProcessRoute) checkProcess(err error) {
 	if err != nil {
@@ -143,6 +147,45 @@ func (t* ProcessRoute) replaceSpecialCharacters(input string) string {
 }
 
 func (t* ProcessRoute) HandleProcessOutput(w http.ResponseWriter, r *http.Request){
+	token := GetAuthtokenFromRequest(r)
+	user := t.userStore.Get(token.Username)
+	pid := mux.Vars(r)["pid"]
+	stream := mux.Vars(r)["stream"]
+	rangeValue := r.Header.Get("Range")
+	if rangeValue == "" {
+		rangeValue = "0-"
+	}
+
+	t.checkProcessOwner(pid, user)
+
+	if ! RANGE_PATTERN.MatchString(rangeValue) {
+		w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+		return
+	}
+
+	startRange, err := strconv.ParseInt(RANGE_PATTERN.FindStringSubmatch(rangeValue)[1], 10, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+		return
+	}
+
+	var data *process.Data
+
+	switch stream {
+	case "out": data, err = t.processManager.ReadOutput(pid, startRange)
+	case "err": data, err = t.processManager.ReadError(pid, startRange)
+	default: w.WriteHeader(http.StatusBadRequest); return
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Accept-Ranges", "bytes")
+	w.Header().Set("Content-Range", "bytes " + rangeValue + strconv.FormatInt(startRange + int64(data.Read), 10) + "/*")
+	w.WriteHeader(http.StatusPartialContent)
+	w.Write(data.Content)
 }
 
 func (t* ProcessRoute) HandleProcessStatus(w http.ResponseWriter, r *http.Request){

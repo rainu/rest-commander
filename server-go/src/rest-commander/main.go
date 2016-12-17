@@ -9,9 +9,17 @@ import (
 	"rest-commander/process"
 	"os"
 	"log"
+	"io/ioutil"
 )
 
 func main() {
+	workTempDir, err := ioutil.TempDir(os.TempDir(), "rest-commander_")
+	if err != nil {
+		panic("Could not create temp directory!" + err.Error())
+	}
+	defer os.RemoveAll(workTempDir)
+	os.Setenv("working.temp", workTempDir)
+
 	userStore := store.NewUserStore()
 	tokenStore := store.NewAuthenticationTokenStore()
 	processManager := process.NewProcessManager()
