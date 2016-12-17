@@ -32,7 +32,7 @@ type processHandle struct {
 var PID_PATTERN, _ = regexp.Compile("[0-9]+")
 var SIGNAL_PATTERN, _ = regexp.Compile("[0-9]+")
 
-func NewLinuxProcessManager() *LinuxProcessManager {
+func NewProcessManager() *LinuxProcessManager {
 	return &LinuxProcessManager{
 		procManager: &defaultProcFileManager{},
 		processHandles: make(map[string]*processHandle),

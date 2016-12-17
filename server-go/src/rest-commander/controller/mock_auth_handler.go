@@ -44,32 +44,3 @@ func (_m *MockAuthenticationController) HandleLogout(w http.ResponseWriter, r *h
 func (_mr *_MockAuthenticationControllerRecorder) HandleLogout(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "HandleLogout", arg0, arg1)
 }
-
-// Mock of AccessDeniedController interface
-type MockAccessDeniedController struct {
-	ctrl     *gomock.Controller
-	recorder *_MockAccessDeniedControllerRecorder
-}
-
-// Recorder for MockAccessDeniedController (not exported)
-type _MockAccessDeniedControllerRecorder struct {
-	mock *MockAccessDeniedController
-}
-
-func NewMockAccessDeniedController(ctrl *gomock.Controller) *MockAccessDeniedController {
-	mock := &MockAccessDeniedController{ctrl: ctrl}
-	mock.recorder = &_MockAccessDeniedControllerRecorder{mock}
-	return mock
-}
-
-func (_m *MockAccessDeniedController) EXPECT() *_MockAccessDeniedControllerRecorder {
-	return _m.recorder
-}
-
-func (_m *MockAccessDeniedController) HandleAccessDenied(w http.ResponseWriter, r *http.Request) {
-	_m.ctrl.Call(_m, "HandleAccessDenied", w, r)
-}
-
-func (_mr *_MockAccessDeniedControllerRecorder) HandleAccessDenied(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "HandleAccessDenied", arg0, arg1)
-}

@@ -2,7 +2,6 @@ package process
 
 import (
 	"rest-commander/model"
-	"runtime"
 )
 
 type ProcessManager interface {
@@ -27,13 +26,4 @@ type ProcessNotFoundError struct {
 
 func (p * ProcessNotFoundError) Error() string {
 	return "No process found for " + p.Pid
-}
-
-func NewProcessManager() ProcessManager {
-	switch runtime.GOOS {
-	case "linux":
-		return NewLinuxProcessManager()
-	default:
-		panic("The current os is not supported!")
-	}
 }

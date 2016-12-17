@@ -36,7 +36,7 @@ type systemUser struct {
 const ETC_PASSWD = "/etc/passwd"
 const ETC_GROUP = "/etc/group"
 
-func NewLinuxUserStore() *LinuxUserStore {
+func NewUserStore() *LinuxUserStore {
 	return &LinuxUserStore{
 		systemUserReader: &defaultSystemUserReader{},
 		allocatedUsers: make(map[string]*User),
