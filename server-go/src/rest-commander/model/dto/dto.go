@@ -26,5 +26,10 @@ type ProcessCreateResponse struct {
 }
 
 type ProcessSignalResponse struct {
-	ReturnCode     int `json:"returnCode"`
+	ReturnCode int `json:"returnCode"`
+}
+
+type ProcessInputRequest struct {
+	Input string `json:"input"`
+	Raw string `json:"raw"`
 }

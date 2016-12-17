@@ -8,6 +8,7 @@ import (
 	"rest-commander/store"
 	"strings"
 	"rest-commander/process"
+	"encoding/base64"
 )
 
 type ProcessController interface {
@@ -105,6 +106,40 @@ func (t* ProcessRoute) HandleProcessSignal(w http.ResponseWriter, r *http.Reques
 }
 
 func (t* ProcessRoute) HandleProcessInput(w http.ResponseWriter, r *http.Request){
+	token := GetAuthtokenFromRequest(r)
+	user := t.userStore.Get(token.Username)
+	pid := mux.Vars(r)["pid"]
+
+	t.checkProcessOwner(pid, user)
+
+	var processInputReq dto.ProcessInputRequest
+	json.NewDecoder(r.Body).Decode(&processInputReq)
+
+	var rawInput []byte
+
+	if processInputReq.Raw != "" {
+		var err error
+		rawInput, err = base64.StdEncoding.DecodeString(processInputReq.Raw)
+		if err != nil {
+			panic(err)
+		}
+	} else if processInputReq.Input != "" {
+		rawInput = []byte(t.replaceSpecialCharacters(processInputReq.Input))
+	} else {
+		return
+	}
+
+	t.processManager.SendInput(pid, rawInput)
+}
+
+func (t* ProcessRoute) replaceSpecialCharacters(input string) string {
+	result := strings.Replace(input, "\\\t", "\t", -1)
+	result = strings.Replace(result, "\\\b", "\b", -1)
+	result = strings.Replace(result, "\\\n", "\n", -1)
+	result = strings.Replace(result, "\\\r", "\r", -1)
+	result = strings.Replace(result, "\\\f", "\f", -1)
+
+	return result
 }
 
 func (t* ProcessRoute) HandleProcessOutput(w http.ResponseWriter, r *http.Request){

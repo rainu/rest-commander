@@ -265,8 +265,24 @@ func (p *LinuxProcessManager) SendSignal(pid string, signal string) (int, error)
 	return 0, nil
 }
 
-func (p *LinuxProcessManager) SendInput(pid string, rawInput []byte) {
+func (p *LinuxProcessManager) SendInput(pid string, rawInput []byte) error {
+	err := p.checkPid(pid)
+	if err != nil {
+		return err
+	}
 
+	err = p.checkProcess(p.toProcess(pid))
+	if err != nil {
+		return err
+	}
+
+	processHandle := p.processHandles[pid]
+	if processHandle == nil {
+		return &ProcessNotFoundError{ Pid: pid, }
+	}
+
+	processHandle.stdIn.Write(rawInput)
+	return nil
 }
 
 func (p *LinuxProcessManager) ReadOutput(pid string, start int64) *Data {

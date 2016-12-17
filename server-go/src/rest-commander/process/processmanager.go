@@ -10,7 +10,7 @@ type ProcessManager interface {
 	StartProcessAsUser(username string, password string, command string, arguments []string, environment map[string]string, workingDirectory string) (string, error)
 	StartProcess(command string, arguments []string, environment map[string]string, workingDirectory string) (string, error)
 	SendSignal(pid string, signal string) (int, error)
-	SendInput(pid string, rawInput []byte)
+	SendInput(pid string, rawInput []byte) error
 	ReadOutput(pid string, start int64) *Data
 	ReadError(pid string, start int64) *Data
 }
