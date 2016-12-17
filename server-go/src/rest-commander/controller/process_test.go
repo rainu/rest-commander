@@ -99,7 +99,6 @@ func Test_ProcessSignal(t *testing.T) {
 
 	req, _ := http.NewRequest("POST", "/process/13/9", nil)
 	req.Header.Set("x-auth-token", "t-o-k-e-n")
-	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(httptest.NewRecorder(), req)
 }
 
@@ -108,7 +107,6 @@ func Test_ProcessSignal_noToken(t *testing.T) {
 	processController.EXPECT().HandleProcessSignal(gomock.Any(), gomock.Any()).Times(0)
 
 	req, _ := http.NewRequest("POST", "/process/13/9", nil)
-	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(httptest.NewRecorder(), req)
 }
 

@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"rest-commander/model/dto"
+	"rest-commander/store"
+	"strings"
+	"rest-commander/process"
 )
 
 type ProcessController interface {
@@ -20,6 +23,24 @@ type ProcessController interface {
 func (t *ProcessRoute) checkProcess(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (t *ProcessRoute) checkProcessOwner(pid string, user *store.User) {
+	if user.Roles.Contains(store.ROLE_ADMIN) {
+		return
+	}
+
+	p, err := t.processManager.Process(pid)
+	if err != nil {
+		panic(err)
+	}
+
+	if p.User != user.Username {
+		//the su command always run as root but the underlying process runs as the user
+		if ! strings.HasPrefix(p.Commandline, "su " + user.Username) {
+			panic(&process.ProcessNotFoundError{ Pid: pid, })
+		}
 	}
 }
 
@@ -66,6 +87,21 @@ func (t* ProcessRoute) HandleStartProcessAdmin(w http.ResponseWriter, r *http.Re
 }
 
 func (t* ProcessRoute) HandleProcessSignal(w http.ResponseWriter, r *http.Request){
+	token := GetAuthtokenFromRequest(r)
+	user := t.userStore.Get(token.Username)
+	pid := mux.Vars(r)["pid"]
+	signal := mux.Vars(r)["signal"]
+
+	t.checkProcessOwner(pid, user)
+	returnCode, err := t.processManager.SendSignal(pid, signal)
+	if err != nil {
+		panic(err)
+	}
+
+	res := &dto.ProcessSignalResponse{
+		ReturnCode: returnCode,
+	}
+	json.NewEncoder(w).Encode(res)
 }
 
 func (t* ProcessRoute) HandleProcessInput(w http.ResponseWriter, r *http.Request){

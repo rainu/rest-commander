@@ -24,3 +24,7 @@ type ProcessCreateResponse struct {
 	Pid     string `json:"pid"`
 	Created bool `json:"created"`
 }
+
+type ProcessSignalResponse struct {
+	ReturnCode     int `json:"returnCode"`
+}

@@ -9,7 +9,7 @@ type ProcessManager interface {
 	Process(pid string) (*model.Process, error)
 	StartProcessAsUser(username string, password string, command string, arguments []string, environment map[string]string, workingDirectory string) (string, error)
 	StartProcess(command string, arguments []string, environment map[string]string, workingDirectory string) (string, error)
-	SendSignal(pid string, signal string) int
+	SendSignal(pid string, signal string) (int, error)
 	SendInput(pid string, rawInput []byte)
 	ReadOutput(pid string, start int64) *Data
 	ReadError(pid string, start int64) *Data

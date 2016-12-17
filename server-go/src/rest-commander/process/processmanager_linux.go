@@ -231,8 +231,38 @@ func (p *LinuxProcessManager) startProcess(command string, arguments []string, e
 	return handle, nil
 }
 
-func (p *LinuxProcessManager) SendSignal(pid string, signal string) int {
-	return -1
+func (p *LinuxProcessManager) SendSignal(pid string, signal string) (int, error) {
+	err := p.checkPid(pid)
+	if err != nil {
+		return -1, err
+	}
+
+	err = p.checkProcess(p.toProcess(pid))
+	if err != nil {
+		return -1, err
+	}
+
+	killCommand := exec.Command("kill")
+
+	if SIGNAL_PATTERN.MatchString(signal) {
+		killCommand.Args = append(killCommand.Args, "-" + signal)
+	} else {
+		killCommand.Args = append(killCommand.Args,
+			"-s" + signal,
+			signal,
+		)
+	}
+	killCommand.Args = append(killCommand.Args, pid)
+
+	err = killCommand.Run()
+	if err != nil {
+		return -1, err
+	}
+
+	if status, ok := killCommand.ProcessState.Sys().(syscall.WaitStatus); ok {
+		return status.ExitStatus(), nil
+	}
+	return 0, nil
 }
 
 func (p *LinuxProcessManager) SendInput(pid string, rawInput []byte) {

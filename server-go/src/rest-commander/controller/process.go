@@ -50,7 +50,6 @@ func applyProcessRouter(router *mux.Router, controller ProcessController, authMi
 	subRouter.
 		Path("/{pid}/{signal}").
 		Methods("POST").
-		Headers("Content-Type", "application/json").
 		Handler(authMiddleware(controller.HandleProcessSignal))
 
 	subRouter.
